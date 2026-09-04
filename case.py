@@ -1,12 +1,13 @@
 """
 case.py - Static case data for "Who Is the Mole?"
 
-Clue chain design:
-- Laboratory (always full, not sabotage-able): an acrostic spells "FOUR" -> a digit.
-- Storage (sabotage-able): a riddle whose answer is "BREEZE" (6 letters) -> a digit.
-- Cafeteria (sabotage-able): the vending PIN's first two digits are exactly the
-  digits from Lab (4) and Storage (6). The job title never gets redacted, so
-  there's always a fallback clue even if the PIN math isn't cracked.
+Clue chain:
+- Laboratory (always full, not sabotage-able): acrostic spells "FOUR" -> digit 4.
+- Storage (sabotage-able): riddle answer "BREEZE" (6 letters) -> digit 6.
+- Cafeteria (sabotage-able): PIN's first two digits are ALWAYS hidden (the
+  player must derive them from Lab + Storage). Only "19" is ever visible.
+  Sabotage/help instead affect how clearly the job title reads — a second,
+  redundant clue channel that never fully disappears.
 """
 
 CHARACTERS = ["Raven", "Zephyr", "Luca", "Marinette", "Adrien"]
@@ -121,7 +122,7 @@ _ZEPHYR_ANSWERS = {
 ROOM_INFO = {
     "Laboratory": {
         "emoji": "🧪",
-        "flavor": "Rows of cracked beakers under a flickering light. A note is pinned to the corkboard, its wording oddly deliberate.",
+        "flavor": "Rows of cracked beakers under a flickering light. A note is pinned to the corkboard.",
     },
     "Storage": {
         "emoji": "📦",
@@ -133,77 +134,63 @@ ROOM_INFO = {
     },
 }
 
-_LAB_NOTE = (
-    "**F**our vents line the ceiling, and every one of them shows fresh scuff marks.\n\n"
-    "**O**nly staff badges can open the vent hatch — the maintenance chart confirms it.\n\n"
-    "**U**nderneath the middle vent, damp footprints trail off toward the hallway.\n\n"
-    "**R**ecords show someone accessed the vent controls well after midnight.\n\n"
-    "*(Someone's circled the first letter of each line. Read top to bottom... could it be a number?)*"
-)
-
-_RIDDLE_BASE = (
-    "*I cannot be seen, but I shake every leaf.*\n\n"
-    "*I fill the sails of ships, yet I weigh nothing at all.*\n\n"
-    "*Sailors bless me on a calm day, and curse me when I turn into a storm.*\n\n"
-    "*What six-letter word am I?*\n\n"
-    "*(Hint scratched at the bottom: count the letters in your answer — you'll need that number.)*"
-)
-
-_RIDDLE_SABOTAGE = (
-    "Someone's scratched extra lines over the original riddle, half-covering it:\n\n"
-    "*I cannot be seen, but I shake every leaf... (the next line is scratched out)*\n\n"
-    "*I fill the sails of ships, yet I weigh nothing at all.*\n\n"
-    "*I can also 'travel' through a crowd as a rumor — so maybe I'm just noise?*\n\n"
-    "*Sailors bless me on a calm day, and curse me when I turn into a storm.*\n\n"
-    "*What six-letter word am I?*\n\n"
-    "*(Hint scratched at the bottom, partly smudged: cou_t the lett___ in your answer.)*"
-)
-
-_RIDDLE_HELP = (
-    _RIDDLE_BASE
-    + "\n\n*Scrawled underneath, in different handwriting:* \"Hint: it's something you'd feel standing on a beach.\""
-)
-
-_CAFE_BASE = (
-    "**Restocking Log — Vending Machine #3**\n\n"
-    "Restocked by: *Supply Coordinator*\n\n"
-    "Employee PIN: **_ _ 1 9**\n\n"
-    "*(First two digits smudged by a spilled drink — last two are legible.)*"
-)
-
-_CAFE_SABOTAGE = (
-    "**Restocking Log — Vending Machine #3** *(coffee-stained)*\n\n"
-    "Restocked by: *Supply Coordinator*\n\n"
-    "Employee PIN: **_ _ _ 9**\n\n"
-    "*(Only the very last digit survived the spill.)*"
-)
-
-_CAFE_HELP = (
-    "**Restocking Log — Vending Machine #3**\n\n"
-    "Restocked by: *Supply Coordinator*\n\n"
-    "Employee PIN: **4 6 1 9**\n\n"
-    "*(Someone left the full log untouched, oddly considerate.)*"
-)
+# ---------- Laboratory: acrostic note (never sabotage-able) ----------
+# First letters read top to bottom spell "FOUR". No hint text — the
+# highlighted letters are the only nudge given.
+_LAB_LINES = [
+    ("F", "our vents line the ceiling, and every one of them shows fresh scuff marks."),
+    ("O", "nly staff badges can open the vent hatch — the maintenance chart confirms it."),
+    ("U", "nderneath the middle vent, damp footprints trail off toward the hallway."),
+    ("R", "ecords show someone accessed the vent controls well after midnight."),
+]
 
 
 def get_lab_clue():
-    return _LAB_NOTE
+    return _LAB_LINES
+
+
+# ---------- Storage: riddle (answer: BREEZE, 6 letters) ----------
+_RIDDLE_LINES = [
+    "I cannot be seen, but I shake every leaf.",
+    "I fill the sails of ships, yet I weigh nothing at all.",
+    "Sailors bless me on a calm day, and curse me when I turn into a storm.",
+    "What am I?",
+]
+_RIDDLE_DECOY = "I can also 'travel' through a crowd as a rumor."
+_RIDDLE_HELPER = "Scrawled beneath, in different handwriting: something you'd feel standing on a beach."
 
 
 def get_storage_clue(decision):
+    """Returns a list of dicts: {'text', 'struck', 'decoy', 'helper'}"""
     if decision == "sabotage":
-        return _RIDDLE_SABOTAGE
+        return [
+            {"text": _RIDDLE_LINES[0], "struck": True, "decoy": False, "helper": False},
+            {"text": _RIDDLE_LINES[1], "struck": False, "decoy": False, "helper": False},
+            {"text": _RIDDLE_DECOY, "struck": False, "decoy": True, "helper": False},
+            {"text": _RIDDLE_LINES[2], "struck": False, "decoy": False, "helper": False},
+            {"text": _RIDDLE_LINES[3], "struck": False, "decoy": False, "helper": False},
+        ]
+    lines = [{"text": l, "struck": False, "decoy": False, "helper": False} for l in _RIDDLE_LINES]
     if decision == "help":
-        return _RIDDLE_HELP
-    return _RIDDLE_BASE
+        lines.append({"text": _RIDDLE_HELPER, "struck": False, "decoy": False, "helper": True})
+    return lines
 
 
+# ---------- Cafeteria: restocking log / PIN ----------
+# The first two PIN digits (the derived ones) are ALWAYS hidden — the player
+# must work them out from Lab + Storage. Only "1" and "9" are ever visible.
+# Sabotage/help instead affect the job-title fragment, a corroborating clue
+# that's never fully destroyed.
 def get_cafeteria_clue(decision):
     if decision == "sabotage":
-        return _CAFE_SABOTAGE
-    if decision == "help":
-        return _CAFE_HELP
-    return _CAFE_BASE
+        job = "Supply Coor" + "▓" * 6  # smudged but still a legible fragment
+    elif decision == "help":
+        job = "Supply Coordinator"
+    else:
+        job = "Supply Coord▓nator"  # lightly worn, still readable
+    pin_digits = list(CORRECT_PIN)          # e.g. ["4","6","1","9"]
+    redacted = [True, True, False, False]   # digits 1-2 always hidden, 3-4 always shown
+    return {"job": job, "pin_digits": pin_digits, "redacted": redacted}
 
 
 def get_answer(character, question_key, tell_truth=True):
