@@ -9,34 +9,21 @@ TOTAL_BUDGET = 9  # 3 room visits + 5 questions + 1 accusation
 
 
 class GameState:
-        def __init__(self, seed=None):
+    def __init__(self, seed=None):
         self.mole_ai = MoleAI(seed)
         self.actions_used = 0
         self.suspicion = 10
-        self.visited_rooms = {}
-        self.room_decisions = {}
-        self.asked = {}
+        self.visited_rooms = {}      # room -> clue text shown
+        self.room_decisions = {}     # room -> "sabotage" / "help" / "neutral"
+        self.asked = {}              # character -> {"question": key, "answer": str, "lied": bool}
         self.log = []
         self.game_over = False
-        self.result = None
+        self.result = None           # "win" / "lose" / None
         self.accused = None
         self.contradiction_flagged = False
-        self.pin_cracked = False        # NEW
-        self.pin_attempts = 0           # NEW
-            # NEW METHOD — add anywhere inside GameState
-    def attempt_pin(self, guess):
-        """Free deduction check: does the player's guessed PIN match the truth?
-        Doesn't cost an action — it's just confirming their own math."""
-        self.pin_attempts += 1
-        digits = "".join(ch for ch in guess if ch.isdigit())
-        correct = digits == case.CORRECT_PIN
-        if correct and not self.pin_cracked:
-            self.pin_cracked = True
-            self._log(
-                "🔓 PIN cracked! The restocking log's employee ID checks out — "
-                "worth remembering for your final accusation."
-            )
-        return correct
+        self.pin_cracked = False
+        self.pin_attempts = 0
+
     # ---------- helpers ----------
     @property
     def actions_remaining(self):
@@ -98,7 +85,6 @@ class GameState:
             lied = not tell_truth
 
             if lied and question_key == "alibi":
-                # Contradiction check: Raven says she was alone in the Lab all night.
                 if "Raven" in self.asked and self.asked["Raven"]["question"] == "alibi":
                     self.suspicion += 25
                     self.contradiction_flagged = True
@@ -123,6 +109,20 @@ class GameState:
         self._log(f"💬 Questioned {character}.")
         return True, answer
 
+    def attempt_pin(self, guess):
+        """Free deduction check: does the player's guessed PIN match the truth?
+        Doesn't cost an action — it's just confirming their own math."""
+        self.pin_attempts += 1
+        digits = "".join(ch for ch in guess if ch.isdigit())
+        correct = digits == case.CORRECT_PIN
+        if correct and not self.pin_cracked:
+            self.pin_cracked = True
+            self._log(
+                "🔓 PIN cracked! The restocking log's employee ID checks out — "
+                "worth remembering for your final accusation."
+            )
+        return correct
+
     def make_accusation(self, character):
         if self.game_over:
             return False, "The case is already closed."
@@ -130,13 +130,12 @@ class GameState:
             return False, "Unknown character."
 
         self.accused = character
-        self.actions_used = TOTAL_BUDGET  # accusation always consumes the final action
+        self.actions_used = TOTAL_BUDGET
         self.game_over = True
         self.result = "win" if character == case.MOLE else "lose"
         self._log(f"⚖️ Final accusation: {character}.")
         return True, self.result
 
-      # UPDATE get_stats() to include the new fields
     def get_stats(self):
         stats = self.mole_ai.stats()
         stats.update(
@@ -146,8 +145,8 @@ class GameState:
                 "result": self.result,
                 "accused": self.accused,
                 "contradiction_flagged": self.contradiction_flagged,
-                "pin_cracked": self.pin_cracked,   # NEW
-                "pin_attempts": self.pin_attempts, # NEW
+                "pin_cracked": self.pin_cracked,
+                "pin_attempts": self.pin_attempts,
             }
         )
         return stats
