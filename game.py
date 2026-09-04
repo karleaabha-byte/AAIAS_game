@@ -9,18 +9,20 @@ TOTAL_BUDGET = 9  # 3 room visits + 5 questions + 1 accusation
 
 
 class GameState:
-    def __init__(self, seed=None):
+        def __init__(self, seed=None):
         self.mole_ai = MoleAI(seed)
         self.actions_used = 0
         self.suspicion = 10
-        self.visited_rooms = {}      # room -> clue text shown
-        self.room_decisions = {}     # room -> "sabotage" / "help" / "neutral"
-        self.asked = {}              # character -> {"question": key, "answer": str, "lied": bool}
+        self.visited_rooms = {}
+        self.room_decisions = {}
+        self.asked = {}
         self.log = []
         self.game_over = False
-        self.result = None           # "win" / "lose" / None
+        self.result = None
         self.accused = None
         self.contradiction_flagged = False
+        self.pin_cracked = False        # NEW
+        self.pin_attempts = 0           # NEW
 
     # ---------- helpers ----------
     @property
