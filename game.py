@@ -23,7 +23,20 @@ class GameState:
         self.contradiction_flagged = False
         self.pin_cracked = False        # NEW
         self.pin_attempts = 0           # NEW
-
+            # NEW METHOD — add anywhere inside GameState
+    def attempt_pin(self, guess):
+        """Free deduction check: does the player's guessed PIN match the truth?
+        Doesn't cost an action — it's just confirming their own math."""
+        self.pin_attempts += 1
+        digits = "".join(ch for ch in guess if ch.isdigit())
+        correct = digits == case.CORRECT_PIN
+        if correct and not self.pin_cracked:
+            self.pin_cracked = True
+            self._log(
+                "🔓 PIN cracked! The restocking log's employee ID checks out — "
+                "worth remembering for your final accusation."
+            )
+        return correct
     # ---------- helpers ----------
     @property
     def actions_remaining(self):
