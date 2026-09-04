@@ -136,6 +136,7 @@ class GameState:
         self._log(f"⚖️ Final accusation: {character}.")
         return True, self.result
 
+      # UPDATE get_stats() to include the new fields
     def get_stats(self):
         stats = self.mole_ai.stats()
         stats.update(
@@ -145,6 +146,8 @@ class GameState:
                 "result": self.result,
                 "accused": self.accused,
                 "contradiction_flagged": self.contradiction_flagged,
+                "pin_cracked": self.pin_cracked,   # NEW
+                "pin_attempts": self.pin_attempts, # NEW
             }
         )
         return stats
