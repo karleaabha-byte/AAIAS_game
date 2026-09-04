@@ -1,15 +1,21 @@
 """
 case.py - Static case data for "Who Is the Mole?"
 
-Design notes:
-- Three independent clue channels all point at Zephyr (the mole): a wind-themed
-  acrostic note, a wind-riddle, and a job-title fragment on a vending log.
-- Every clue survives sabotage in a weakened-but-still-useful form, so the
-  case stays solvable no matter how the mole plays it.
+Clue chain design:
+- Laboratory (always full, not sabotage-able): an acrostic spells "FOUR" -> a digit.
+- Storage (sabotage-able): a riddle whose answer is "BREEZE" (6 letters) -> a digit.
+- Cafeteria (sabotage-able): the vending PIN's first two digits are exactly the
+  digits from Lab (4) and Storage (6). The job title never gets redacted, so
+  there's always a fallback clue even if the PIN math isn't cracked.
 """
 
 CHARACTERS = ["Raven", "Zephyr", "Luca", "Marinette", "Adrien"]
 MOLE = "Zephyr"
+
+LAB_NUMBER = 4
+STORAGE_ANSWER = "BREEZE"
+STORAGE_NUMBER = len(STORAGE_ANSWER)  # 6
+CORRECT_PIN = f"{LAB_NUMBER}{STORAGE_NUMBER}19"  # "4619"
 
 CASE_INTRO = """
 ### 🧟 Research Facility — Night Shift Incident Report
@@ -66,7 +72,6 @@ QUESTION_BANK = [
     ("trust", "Who around here would you trust the least, and why?"),
 ]
 
-# Flavor / soft-hint answers for innocent characters (always truthful).
 _INNOCENT_ANSWERS = {
     "Raven": {
         "suspicion": "The vents have been rattling more than usual. Might be nothing.",
@@ -94,7 +99,6 @@ _INNOCENT_ANSWERS = {
     },
 }
 
-# Truth/lie pairs for the mole, per question (alibi is handled separately below).
 _ZEPHYR_ANSWERS = {
     "suspicion": {
         "truth": "Now that you mention it... I felt a strange draft near the vents last night. Probably nothing.",
@@ -130,28 +134,29 @@ ROOM_INFO = {
 }
 
 _LAB_NOTE = (
-    "**W**hispers say the vents were tampered with.\n\n"
-    "**I**nsists Raven: the door was locked the whole night — so how?\n\n"
-    "**N**obody but staff has vent access, the maintenance chart shows.\n\n"
-    "**D**amp footprints trailed from the vent to the hallway, drying by morning.\n\n"
-    "**Y**esternight's chill in the lab had everyone reaching for a jacket.\n\n"
-    "*(Someone's underlined the first letter of each line, top to bottom...)*"
+    "**F**our vents line the ceiling, and every one of them shows fresh scuff marks.\n\n"
+    "**O**nly staff badges can open the vent hatch — the maintenance chart confirms it.\n\n"
+    "**U**nderneath the middle vent, damp footprints trail off toward the hallway.\n\n"
+    "**R**ecords show someone accessed the vent controls well after midnight.\n\n"
+    "*(Someone's circled the first letter of each line. Read top to bottom... could it be a number?)*"
 )
 
 _RIDDLE_BASE = (
     "*I cannot be seen, but I shake every leaf.*\n\n"
     "*I fill the sails of ships, yet I weigh nothing at all.*\n\n"
     "*Sailors bless me on a calm day, and curse me when I turn into a storm.*\n\n"
-    "*What am I?*"
+    "*What six-letter word am I?*\n\n"
+    "*(Hint scratched at the bottom: count the letters in your answer — you'll need that number.)*"
 )
 
 _RIDDLE_SABOTAGE = (
     "Someone's scratched extra lines over the original riddle, half-covering it:\n\n"
-    "*I cannot be seen, but I shake every leaf... (the middle line is scratched out)*\n\n"
+    "*I cannot be seen, but I shake every leaf... (the next line is scratched out)*\n\n"
     "*I fill the sails of ships, yet I weigh nothing at all.*\n\n"
     "*I can also 'travel' through a crowd as a rumor — so maybe I'm just noise?*\n\n"
     "*Sailors bless me on a calm day, and curse me when I turn into a storm.*\n\n"
-    "*What am I?*"
+    "*What six-letter word am I?*\n\n"
+    "*(Hint scratched at the bottom, partly smudged: cou_t the lett___ in your answer.)*"
 )
 
 _RIDDLE_HELP = (
@@ -162,25 +167,26 @@ _RIDDLE_HELP = (
 _CAFE_BASE = (
     "**Restocking Log — Vending Machine #3**\n\n"
     "Restocked by: *Supply Coordinator*\n\n"
-    "Time: 11:47 PM\n\n"
-    "New PIN set: 2‑7‑1‑9"
+    "Employee PIN: **_ _ 1 9**\n\n"
+    "*(First two digits smudged by a spilled drink — last two are legible.)*"
 )
 
 _CAFE_SABOTAGE = (
     "**Restocking Log — Vending Machine #3** *(coffee-stained)*\n\n"
-    "Restocked by: *Supply Coor~~~~~* (rest smudged)\n\n"
-    "Time: ##:## (unreadable)\n\n"
-    "New PIN set: #‑#‑1‑9 (only the last two digits survived)"
+    "Restocked by: *Supply Coordinator*\n\n"
+    "Employee PIN: **_ _ _ 9**\n\n"
+    "*(Only the very last digit survived the spill.)*"
 )
 
 _CAFE_HELP = (
-    _CAFE_BASE
-    + "\n\n*A sticky note is stuck to the side:* \"Sorry about the mess earlier — S.C.\""
+    "**Restocking Log — Vending Machine #3**\n\n"
+    "Restocked by: *Supply Coordinator*\n\n"
+    "Employee PIN: **4 6 1 9**\n\n"
+    "*(Someone left the full log untouched, oddly considerate.)*"
 )
 
 
 def get_lab_clue():
-    """Laboratory is not mole-controllable — always shown in full."""
     return _LAB_NOTE
 
 
