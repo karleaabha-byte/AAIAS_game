@@ -306,9 +306,9 @@ QUESTION_BANK = {
 
 ANSWERS = {
 
-    # --------------------------------------------------------
+    # ========================================================
     # RAVEN
-    # --------------------------------------------------------
+    # ========================================================
 
     "Raven": {
 
@@ -344,7 +344,6 @@ ANSWERS = {
             "truth": True
         },
 
-        # Raven has an innocent secret.
         "vent": {
             "answer": (
                 "No. I don't touch the ventilation system. "
@@ -369,7 +368,6 @@ ANSWERS = {
             "truth": True
         },
 
-        # Small red herring:
         "vending": {
             "answer": (
                 "I did leave my desk for maybe thirty seconds "
@@ -380,9 +378,9 @@ ANSWERS = {
     },
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # ZEPHYR
-    # --------------------------------------------------------
+    # ========================================================
 
     "Zephyr": {
 
@@ -451,9 +449,9 @@ ANSWERS = {
     },
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # LUCA
-    # --------------------------------------------------------
+    # ========================================================
 
     "Luca": {
 
@@ -489,7 +487,6 @@ ANSWERS = {
             "truth": True
         },
 
-        # Luca hides an embarrassing mistake.
         "vent": {
             "answer": (
                 "I didn't touch the ventilation controls."
@@ -522,9 +519,9 @@ ANSWERS = {
     },
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # MARINETTE
-    # --------------------------------------------------------
+    # ========================================================
 
     "Marinette": {
 
@@ -572,7 +569,6 @@ ANSWERS = {
             "truth": True
         },
 
-        # She initially protects someone's privacy.
         "inventory": {
             "answer": (
                 "I heard that something was missing, "
@@ -590,9 +586,9 @@ ANSWERS = {
     },
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # ADRIEN
-    # --------------------------------------------------------
+    # ========================================================
 
     "Adrien": {
 
@@ -652,7 +648,6 @@ ANSWERS = {
             "truth": True
         },
 
-        # Adrien is hiding a harmless detail.
         "lab": {
             "answer": (
                 "I passed the Laboratory earlier, but I didn't go inside."
@@ -736,20 +731,41 @@ CAFETERIA_CLUE = {
 # ============================================================
 
 def get_lab_clue():
+    """
+    Return the Laboratory clue.
+    """
     return LAB_CLUE
 
 
-def get_storage_clue():
+def get_storage_clue(decision=None):
+    """
+    Return the Storage clue.
+
+    `decision` is accepted for compatibility with game.py.
+    The current clue does not change based on the Mole's decision.
+    """
     return STORAGE_CLUE
 
 
-def get_cafeteria_clue():
+def get_cafeteria_clue(decision=None):
+    """
+    Return the Cafeteria clue.
+
+    `decision` is accepted for compatibility with game.py.
+    The current clue does not change based on the Mole's decision.
+    """
     return CAFETERIA_CLUE
 
 
 def get_question(character, question_key):
+    """
+    Return the stored answer information for a character/question.
+    """
     return ANSWERS[character][question_key]
 
 
 def get_profile(character):
+    """
+    Return the profile for a character.
+    """
     return PROFILES[character]
