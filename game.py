@@ -3,28 +3,30 @@ game.py - Game state and rules engine for "Who Is the Mole?"
 """
 import case
 from ai_agent import MoleAI
+from evidence import EvidenceBoard
 
 ROOMS = ["Laboratory", "Storage", "Cafeteria"]
-TOTAL_BUDGET = 9  # 3 room visits + 5 questions + 1 accusation
+TOTAL_BUDGET = 9
 
 
 class GameState:
     def __init__(self, seed=None):
         self.mole_ai = MoleAI(seed)
+        self.evidence = EvidenceBoard()
         self.actions_used = 0
         self.suspicion = 10
-        self.visited_rooms = {}      # room -> clue text shown
-        self.room_decisions = {}     # room -> "sabotage" / "help" / "neutral"
-        self.asked = {}              # character -> {"question": key, "answer": str, "lied": bool}
+        self.visited_rooms = {}
+        self.room_decisions = {}
+        self.asked = {}
         self.log = []
         self.game_over = False
-        self.result = None           # "win" / "lose" / None
+        self.result = None
         self.accused = None
         self.contradiction_flagged = False
         self.pin_cracked = False
         self.pin_attempts = 0
+        self.last_contradiction = None
 
-    # ---------- helpers ----------
     @property
     def actions_remaining(self):
         return TOTAL_BUDGET - self.actions_used
@@ -38,7 +40,6 @@ class GameState:
     def can_act(self):
         return not self.game_over and self.actions_remaining > 0
 
-    # ---------- actions ----------
     def visit_room(self, room):
         if not self.can_act():
             return False, "No actions remaining."
@@ -50,12 +51,15 @@ class GameState:
         if room == "Laboratory":
             clue = case.get_lab_clue()
             decision = "neutral"
+            self.evidence.add_clue("lab_acrostic")
         else:
             decision = self.mole_ai.decide_room_action(self.suspicion, self.actions_remaining)
             if room == "Storage":
                 clue = case.get_storage_clue(decision)
+                self.evidence.add_clue("storage_riddle")
             else:
                 clue = case.get_cafeteria_clue(decision)
+                self.evidence.add_clue("cafeteria_pin")
 
             if decision == "sabotage":
                 self.suspicion += self.mole_ai.rng.randint(8, 14)
@@ -88,9 +92,10 @@ class GameState:
                 if "Raven" in self.asked and self.asked["Raven"]["question"] == "alibi":
                     self.suspicion += 25
                     self.contradiction_flagged = True
+                    self.last_contradiction = "Raven claimed to be alone in the Laboratory, but Zephyr claims to have visited."
                     self._log(
-                        "🚨 Wait — Raven swore she was ALONE in the Laboratory all night, but "
-                        "Zephyr just claimed to have popped in to borrow a tool. That doesn't add up!"
+                        "🚨 CONTRADICTION: Raven swore she was ALONE in the Laboratory all night, but "
+                        "Zephyr just claimed to have popped in. That doesn't add up!"
                     )
                 else:
                     self.suspicion += 6
@@ -105,21 +110,27 @@ class GameState:
 
         self._clamp_suspicion()
         self.asked[character] = {"question": question_key, "answer": answer, "lied": lied}
+        self.evidence.log_answer(character, question_key, answer, lied)
         self.actions_used += 1
         self._log(f"💬 Questioned {character}.")
+
+        # Detect contradictions after logging
+        new_contradictions = self.evidence.detect_contradictions()
+        for contradiction in new_contradictions:
+            self._log(f"🚨 {contradiction['detail']}")
+
         return True, answer
 
     def attempt_pin(self, guess):
-        """Free deduction check: does the player's guessed PIN match the truth?
-        Doesn't cost an action — it's just confirming their own math."""
         self.pin_attempts += 1
         digits = "".join(ch for ch in guess if ch.isdigit())
         correct = digits == case.CORRECT_PIN
         if correct and not self.pin_cracked:
             self.pin_cracked = True
+            self.evidence.set_pin_cracked()
             self._log(
                 "🔓 PIN cracked! The restocking log's employee ID checks out — "
-                "worth remembering for your final accusation."
+                "that's the Supply Coordinator's credentials."
             )
         return correct
 
@@ -147,6 +158,8 @@ class GameState:
                 "contradiction_flagged": self.contradiction_flagged,
                 "pin_cracked": self.pin_cracked,
                 "pin_attempts": self.pin_attempts,
+                "guilt_scores": self.evidence.guilt_scores,
+                "last_contradiction": self.last_contradiction,
             }
         )
         return stats
