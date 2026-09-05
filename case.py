@@ -795,3 +795,10 @@ def get_answer(character, question_key, tell_truth=True):
     uses it when handling the Mole's responses.
     """
     return ANSWERS[character][question_key]["answer"]
+
+def get_answer(character, question_key, tell_truth=True):
+    return ANSWERS[character][question_key]["answer"]
+
+
+def get_profile(character):
+    return PROFILES[character]
