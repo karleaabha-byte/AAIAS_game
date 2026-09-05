@@ -1,10 +1,10 @@
 """
-game.py - Game state and rules engine for "Zom-Mole Hunter"
+game.py
+Game state and rules engine for Zom-Mole Hunter
 """
 
 import case
 
-from ai_agent import MoleAI
 from evidence import EvidenceBoard
 
 
@@ -28,8 +28,6 @@ TOTAL_BUDGET = 12
 class GameState:
 
     def __init__(self, seed=None):
-
-        self.mole_ai = MoleAI(seed)
 
         self.evidence = EvidenceBoard()
 
@@ -67,26 +65,7 @@ class GameState:
     @property
     def actions_remaining(self):
 
-        return (
-            TOTAL_BUDGET
-            - self.actions_used
-        )
-
-
-    def _clamp_suspicion(self):
-
-        self.suspicion = max(
-            0,
-            min(
-                100,
-                self.suspicion
-            )
-        )
-
-
-    def _log(self, text):
-
-        self.log.append(text)
+        return TOTAL_BUDGET - self.actions_used
 
 
     def can_act(self):
@@ -97,6 +76,11 @@ class GameState:
         )
 
 
+    def _log(self, text):
+
+        self.log.append(text)
+
+
     # ========================================================
     # ROOM INVESTIGATION
     # ========================================================
@@ -104,199 +88,119 @@ class GameState:
     def visit_room(self, room):
 
         if not self.can_act():
-
-            return (
-                False,
-                "No actions remaining."
-            )
-
+            return False, "No actions remaining."
 
         if room in self.visited_rooms:
-
-            return (
-                False,
-                f"You've already investigated the {room}."
-            )
-
+            return False, f"You've already investigated the {room}."
 
         if room not in ROOMS:
+            return False, "Unknown room."
 
-            return (
-                False,
-                "Unknown room."
-            )
-
-
-        # ====================================================
+        # ----------------------------------------------------
         # LABORATORY
-        # ====================================================
+        # ----------------------------------------------------
 
         if room == "Laboratory":
 
             clue = case.get_lab_clue()
 
-            decision = "neutral"
-
             self.evidence.add_clue(
                 "lab_acrostic"
             )
 
+            self.room_decisions[room] = "neutral"
 
-        # ====================================================
-        # STORAGE / CAFETERIA
-        # ====================================================
+
+        # ----------------------------------------------------
+        # STORAGE
+        # ----------------------------------------------------
+
+        elif room == "Storage":
+
+            clue = case.get_storage_clue()
+
+            self.evidence.add_clue(
+                "storage_riddle"
+            )
+
+            self.room_decisions[room] = "neutral"
+
+
+        # ----------------------------------------------------
+        # CAFETERIA
+        # ----------------------------------------------------
 
         else:
 
-            decision = (
-                self.mole_ai.decide_room_action(
-                    self.suspicion,
-                    self.actions_remaining
-                )
+            clue = case.get_cafeteria_clue()
+
+            self.evidence.add_clue(
+                "cafeteria_pin"
             )
 
-
-            if room == "Storage":
-
-                clue = case.get_storage_clue(
-                    decision
-                )
-
-                self.evidence.add_clue(
-                    "storage_riddle"
-                )
+            self.room_decisions[room] = "neutral"
 
 
-            else:
-
-                clue = case.get_cafeteria_clue(
-                    decision
-                )
-
-                self.evidence.add_clue(
-                    "cafeteria_pin"
-                )
-
-
-            # =================================================
-            # AI ROOM BEHAVIOUR
-            # =================================================
-
-            if decision == "sabotage":
-
-                self.suspicion += (
-                    self.mole_ai.rng.randint(
-                        8,
-                        14
-                    )
-                )
-
-                self._log(
-                    f"🕵️ Something feels *off* "
-                    f"about the {room} — "
-                    f"did someone tamper with it?"
-                )
-
-            else:
-
-                self.suspicion -= (
-                    self.mole_ai.rng.randint(
-                        4,
-                        8
-                    )
-                )
-
-                self._log(
-                    f"🙂 The {room} seems "
-                    f"undisturbed."
-                )
-
-
-        self._clamp_suspicion()
-
-
-        self.room_decisions[room] = decision
+        # ----------------------------------------------------
+        # SAVE INVESTIGATION
+        # ----------------------------------------------------
 
         self.visited_rooms[room] = clue
 
         self.actions_used += 1
 
-
         self._log(
             f"🔎 Investigated the {room}."
         )
 
-
-        return (
-            True,
-            clue
-        )
+        return True, clue
 
 
     # ========================================================
-    # PIN ATTEMPT
+    # PIN
     # ========================================================
 
     def attempt_pin(self, guess):
 
-        # Every attempt consumes one action.
         if not self.can_act():
-
             return False
 
-
-        # ====================================================
-        # CONSUME ACTION FIRST
-        # ====================================================
-
+        # Every attempt costs one action
         self.actions_used += 1
 
         self.pin_attempts += 1
 
-
-        # ====================================================
-        # CLEAN USER INPUT
-        # ====================================================
-
         digits = "".join(
-            ch
-            for ch in str(guess)
-            if ch.isdigit()
+            character
+            for character in str(guess)
+            if character.isdigit()
         )
-
-
-        # ====================================================
-        # CHECK PIN
-        # ====================================================
 
         correct = (
             digits == case.CORRECT_PIN
         )
 
-
-        # ====================================================
+        # ----------------------------------------------------
         # CORRECT
-        # ====================================================
+        # ----------------------------------------------------
 
         if correct:
 
-            if not self.pin_cracked:
+            self.pin_cracked = True
 
-                self.pin_cracked = True
+            self.evidence.set_pin_cracked()
 
-                self.evidence.set_pin_cracked()
-
-                self._log(
-                    "🔓 PIN CRACKED. "
-                    "Restricted employee access unlocked."
-                )
+            self._log(
+                "🔓 PIN CRACKED. "
+                "Restricted employee access unlocked."
+            )
 
             return True
 
 
-        # ====================================================
+        # ----------------------------------------------------
         # INCORRECT
-        # ====================================================
+        # ----------------------------------------------------
 
         self._log(
             f"🔐 Incorrect PIN attempt "
@@ -316,9 +220,9 @@ class GameState:
         question_key
     ):
 
-        # ====================================================
+        # ----------------------------------------------------
         # PIN LOCK
-        # ====================================================
+        # ----------------------------------------------------
 
         if not self.pin_cracked:
 
@@ -329,9 +233,9 @@ class GameState:
             )
 
 
-        # ====================================================
-        # NORMAL ACTION CHECK
-        # ====================================================
+        # ----------------------------------------------------
+        # ACTION CHECK
+        # ----------------------------------------------------
 
         if not self.can_act():
 
@@ -341,6 +245,10 @@ class GameState:
             )
 
 
+        # ----------------------------------------------------
+        # ONE QUESTION PER SUSPECT
+        # ----------------------------------------------------
+
         if character in self.asked:
 
             return (
@@ -348,6 +256,10 @@ class GameState:
                 f"You've already questioned {character}."
             )
 
+
+        # ----------------------------------------------------
+        # VALID CHARACTER
+        # ----------------------------------------------------
 
         if character not in case.CHARACTERS:
 
@@ -357,98 +269,40 @@ class GameState:
             )
 
 
-        # ====================================================
-        # MOLE
-        # ====================================================
+        # ----------------------------------------------------
+        # VALID QUESTION
+        # ----------------------------------------------------
 
-        if character == case.MOLE:
+        if question_key not in case.QUESTION_BANK:
 
-            tell_truth = (
-                self.mole_ai.decide_truth_or_lie(
-                    self.suspicion
-                )
+            return (
+                False,
+                "Unknown question."
             )
 
-            answer = case.get_answer(
-                character,
-                question_key,
-                tell_truth
-            )
 
-            lied = not tell_truth
+        # ----------------------------------------------------
+        # GET ANSWER
+        # ----------------------------------------------------
 
+        answer_data = case.get_question(
+            character,
+            question_key
+        )
 
-            # =================================================
-            # ALIBI CONTRADICTION
-            # =================================================
+        answer = answer_data["answer"]
 
-            if (
-                lied
-                and question_key == "alibi"
-            ):
+        actual_truth = answer_data.get(
+            "truth",
+            True
+        )
 
-                if (
-                    "Raven" in self.asked
-                    and self.asked["Raven"]["question"]
-                    == "alibi"
-                ):
-
-                    self.suspicion += 25
-
-                    self.contradiction_flagged = True
-
-                    self.last_contradiction = (
-                        "Raven claimed to be alone "
-                        "in the Laboratory, but Zephyr "
-                        "claims to have visited."
-                    )
-
-                    self._log(
-                        "🚨 CONTRADICTION: "
-                        "Raven swore she was ALONE "
-                        "in the Laboratory all night, "
-                        "but Zephyr just claimed to "
-                        "have popped in."
-                    )
-
-                else:
-
-                    self.suspicion += 6
+        lied = not actual_truth
 
 
-            elif lied:
-
-                self.suspicion += 5
-
-
-            else:
-
-                self.suspicion -= 3
-
-
-        # ====================================================
-        # OTHER CHARACTERS
-        # ====================================================
-
-        else:
-
-            tell_truth = True
-
-            answer = case.get_answer(
-                character,
-                question_key,
-                True
-            )
-
-            lied = False
-
-
-        # ====================================================
-        # SAVE
-        # ====================================================
-
-        self._clamp_suspicion()
-
+        # ----------------------------------------------------
+        # SAVE STATEMENT
+        # ----------------------------------------------------
 
         self.asked[character] = {
 
@@ -464,9 +318,41 @@ class GameState:
             character,
             question_key,
             answer,
-            lied
+
+            # EvidenceBoard expects whether
+            # the statement was actually true.
+            actual_truth
         )
 
+
+        # ----------------------------------------------------
+        # SMALL SUSPICION EFFECT
+        # ----------------------------------------------------
+
+        if character == case.MOLE:
+
+            if lied:
+                self.suspicion += 8
+            else:
+                self.suspicion -= 2
+
+        else:
+
+            self.suspicion -= 1
+
+
+        self.suspicion = max(
+            0,
+            min(
+                100,
+                self.suspicion
+            )
+        )
+
+
+        # ----------------------------------------------------
+        # CONSUME ACTION
+        # ----------------------------------------------------
 
         self.actions_used += 1
 
@@ -474,22 +360,6 @@ class GameState:
         self._log(
             f"💬 Questioned {character}."
         )
-
-
-        # ====================================================
-        # DETECT CONTRADICTIONS
-        # ====================================================
-
-        new_contradictions = (
-            self.evidence.detect_contradictions()
-        )
-
-
-        for contradiction in new_contradictions:
-
-            self._log(
-                f"🚨 {contradiction['detail']}"
-            )
 
 
         return (
@@ -557,39 +427,32 @@ class GameState:
 
     def get_stats(self):
 
-        stats = self.mole_ai.stats()
+        return {
 
+            "actions_used":
+                self.actions_used,
 
-        stats.update(
-            {
-                "actions_used":
-                    self.actions_used,
+            "suspicion":
+                self.suspicion,
 
-                "suspicion":
-                    self.suspicion,
+            "result":
+                self.result,
 
-                "result":
-                    self.result,
+            "accused":
+                self.accused,
 
-                "accused":
-                    self.accused,
+            "contradiction_flagged":
+                self.contradiction_flagged,
 
-                "contradiction_flagged":
-                    self.contradiction_flagged,
+            "guilt_scores":
+                self.evidence.guilt_scores,
 
-                "guilt_scores":
-                    self.evidence.guilt_scores,
+            "last_contradiction":
+                self.last_contradiction,
 
-                "last_contradiction":
-                    self.last_contradiction,
+            "pin_cracked":
+                self.pin_cracked,
 
-                "pin_cracked":
-                    self.pin_cracked,
-
-                "pin_attempts":
-                    self.pin_attempts,
-            }
-        )
-
-
-        return stats
+            "pin_attempts":
+                self.pin_attempts
+        }
