@@ -280,8 +280,8 @@ LAB_CLUE = {
     "lines": [
         "Filter pressure was stable before midnight.",
         "One centrifuge cycle was interrupted manually.",
-        "Raven's workstation was still active.",
-        "The interruption was recorded at 11:52 PM."
+        "Up and working: Raven's workstation was still active.",
+        "Recorded at 11:52 PM."
     ]
 }
 
