@@ -5,15 +5,59 @@ Run with:
     streamlit run app.py
 """
 import streamlit as st
+import io
 
 import case
 import optimal_path
 from game import GameState, TOTAL_BUDGET
-import sounds
 
-st.set_page_config(page_title="Who Is the Mole?", page_icon="🧟", layout="wide")
+# --- Inline sound generation ---
+try:
+    import numpy as np
+    from scipy.io import wavfile
+    AUDIO_AVAILABLE = True
+except ImportError:
+    AUDIO_AVAILABLE = False
+
+
+def generate_beep(frequency=1000, duration=0.2, sample_rate=22050):
+    if not AUDIO_AVAILABLE:
+        return None
+    t = np.linspace(0, duration, int(sample_rate * duration))
+    wave = np.sin(2 * np.pi * frequency * t) * 0.3
+    wave = (wave * 32767).astype(np.int16)
+    buffer = io.BytesIO()
+    wavfile.write(buffer, sample_rate, wave)
+    buffer.seek(0)
+    return buffer
+
+
+def typewriter_click():
+    return generate_beep(frequency=2000, duration=0.05)
+
+
+def success_chime():
+    if not AUDIO_AVAILABLE:
+        return None
+    sample_rate = 22050
+    duration = 0.5
+    t = np.linspace(0, duration, int(sample_rate * duration))
+    freq_progression = np.concatenate([
+        np.full(len(t)//3, 262),
+        np.full(len(t)//3, 330),
+        np.full(len(t)//3, 392),
+    ])
+    wave = np.sin(2 * np.pi * freq_progression[:len(t)] * t) * 0.3
+    wave = (wave * 32767).astype(np.int16)
+    buffer = io.BytesIO()
+    wavfile.write(buffer, sample_rate, wave)
+    buffer.seek(0)
+    return buffer
+
 
 # ---------- NOIR AESTHETIC: Dark purples + amber accents ----------
+st.set_page_config(page_title="Who Is the Mole?", page_icon="🧟", layout="wide")
+
 st.markdown(
     """
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Crimson+Text:ital@0;1&display=swap" rel="stylesheet">
@@ -199,12 +243,23 @@ st.markdown(
         from { opacity: 0; transform: translateX(-10px); }
         to { opacity: 1; transform: translateX(0); }
     }
-    .suspicion-meter {
-        background: #1a0f2e;
-        border: 2px solid #d4af37;
+    .background-section {
+        background: #2d1f42;
+        border: 1px solid #5a3d8a;
         border-radius: 8px;
         padding: 12px;
         margin: 10px 0;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .background-title {
+        color: #d4af37;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    .background-entry {
+        color: #c9a961;
+        padding: 4px 0;
+        border-bottom: 1px dotted #5a3d8a;
     }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
@@ -295,9 +350,9 @@ name = st.session_state.researcher_name
 
 st.title("🧟 WHO IS THE MOLE?")
 if name:
-    st.caption(f"Detective Case File: {name} | 9 Actions Remaining")
+    st.caption(f"Detective Case File: {name} | {game.actions_remaining} Actions Remaining")
 else:
-    st.caption("A noir-tinged mystery awaits... 9 actions to crack the case.")
+    st.caption("A noir-tinged mystery awaits... 12 actions to crack the case.")
 
 # ---------- Sidebar ----------
 with st.sidebar:
@@ -343,7 +398,7 @@ if game.game_over:
     st.divider()
     if game.result == "win":
         st.success(f"✅ CASE CLOSED: {game.accused} is the mole.")
-        audio = sounds.success_chime()
+        audio = success_chime()
         if audio:
             st.audio(audio, format="audio/wav")
     else:
@@ -355,7 +410,7 @@ if game.game_over:
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("INVESTIGATION REPORT")
-        st.write(f"- Actions Used: **{stats['actions_used']}/9**")
+        st.write(f"- Actions Used: **{stats['actions_used']}/12**")
         st.write(f"- Final Suspicion: **{stats['suspicion']}/100**")
         st.write(f"- Mole Sabotages: **{stats['sabotage_count']}**")
         st.write(f"- Mole Helps: **{stats['help_count']}**")
@@ -370,25 +425,22 @@ if game.game_over:
     st.stop()
 
 # ---------- Main tabs ----------
-tab_researcher, tab_evidence, tab_rooms, tab_people, tab_accuse = st.tabs(
-    ["🧑‍💼 DETECTIVE", "🔍 EVIDENCE", "🏚️ CRIME SCENES", "🗣️ INTERROGATIONS", "⚖️ ACCUSATION"]
+tab_background, tab_evidence, tab_rooms, tab_people, tab_accuse = st.tabs(
+    ["📋 BACKGROUND", "🔍 EVIDENCE", "🏚️ CRIME SCENES", "🗣️ INTERROGATIONS", "⚖️ ACCUSATION"]
 )
 
-with tab_researcher:
-    st.subheader("Detective Profile")
-    entered = st.text_input(
-        "Your name (optional)", value=st.session_state.researcher_name, placeholder="e.g. Detective Osei"
-    )
-    if st.button("Register"):
-        st.session_state.researcher_name = entered.strip()
-        st.rerun()
-
-    st.divider()
-    st.subheader("Suspects")
-    for character in case.CHARACTERS:
-        job = case.PROFILES[character]["job"]
-        location = case.PROFILES[character]["location"]
-        st.write(f"**{character}** — {job} *(Last seen: {location})*")
+with tab_background:
+    st.subheader("Investigation Background")
+    st.write("Review the facts established at the crime scene. Use these to guide your interrogations.")
+    
+    for section_key, section_data in case.BACKGROUND.items():
+        with st.expander(f"📄 {section_data['title']}", expanded=True):
+            if "entries" in section_data:
+                for entry in section_data["entries"]:
+                    st.write(f"• {entry}")
+            if "notes" in section_data:
+                for note in section_data["notes"]:
+                    st.write(f"• {note}")
 
 with tab_evidence:
     st.subheader("Detective Board")
@@ -419,11 +471,11 @@ with tab_rooms:
                         unsafe_allow_html=True,
                     )
                     st.divider()
-                    guess = st.text_input("PIN Guess", key="pin_guess", max_chars=8, placeholder="e.g. 4619")
+                    guess = st.text_input("PIN Guess", key="pin_guess", max_chars=8)
                     if st.button("Verify PIN", key="check_pin"):
                         if game.attempt_pin(guess):
                             st.success("🔓 Correct PIN! Supply Coordinator confirmed.")
-                            audio = sounds.success_chime()
+                            audio = success_chime()
                             if audio:
                                 st.audio(audio, format="audio/wav")
                         else:
@@ -432,7 +484,7 @@ with tab_rooms:
                 if st.button(f"Investigate {room}", key=f"visit_{room}", disabled=not game.can_act()):
                     ok, clue = game.visit_room(room)
                     if ok:
-                        audio = sounds.typewriter_click()
+                        audio = typewriter_click()
                         if audio:
                             st.audio(audio, format="audio/wav")
                         st.rerun()
@@ -447,8 +499,6 @@ with tab_people:
                 qa = game.asked[character]
                 st.write(f"**Q:** {question_lookup[qa['question']]}")
                 st.write(f"**A:** _{qa['answer']}_")
-                if qa["lied"]:
-                    st.warning("⚠️ This answer was a lie.")
             else:
                 q_key = st.selectbox(
                     "Question",
@@ -459,7 +509,7 @@ with tab_people:
                 if st.button(f"Ask {character}", key=f"ask_{character}", disabled=not game.can_act()):
                     ok, answer = game.ask_question(character, q_key)
                     if ok:
-                        audio = sounds.typewriter_click()
+                        audio = typewriter_click()
                         if audio:
                             st.audio(audio, format="audio/wav")
                         st.rerun()
