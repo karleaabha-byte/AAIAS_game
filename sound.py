@@ -1,16 +1,21 @@
 """
-sounds.py - Generate simple sound effects dynamically using numpy + scipy.
-
-These are synthesized in-memory, so no external audio files needed.
+sounds.py - Sound effects (graceful fallback if dependencies missing)
 """
 import io
-import numpy as np
-from scipy.io import wavfile
-import streamlit as st
+
+try:
+    import numpy as np
+    from scipy.io import wavfile
+    AUDIO_AVAILABLE = True
+except ImportError:
+    AUDIO_AVAILABLE = False
 
 
 def generate_beep(frequency=1000, duration=0.2, sample_rate=22050):
     """Generate a simple beep tone."""
+    if not AUDIO_AVAILABLE:
+        return None
+    
     t = np.linspace(0, duration, int(sample_rate * duration))
     wave = np.sin(2 * np.pi * frequency * t) * 0.3
     wave = (wave * 32767).astype(np.int16)
@@ -28,6 +33,9 @@ def typewriter_click():
 
 def suspicion_whoosh():
     """Whoosh/ascending tone for suspicion increase."""
+    if not AUDIO_AVAILABLE:
+        return None
+    
     sample_rate = 22050
     duration = 0.3
     t = np.linspace(0, duration, int(sample_rate * duration))
@@ -43,6 +51,9 @@ def suspicion_whoosh():
 
 def contradiction_alert():
     """Sharp alert for contradiction found."""
+    if not AUDIO_AVAILABLE:
+        return None
+    
     sample_rate = 22050
     duration = 0.15
     t = np.linspace(0, duration, int(sample_rate * duration))
@@ -59,6 +70,9 @@ def contradiction_alert():
 
 def success_chime():
     """Success/victory chime."""
+    if not AUDIO_AVAILABLE:
+        return None
+    
     sample_rate = 22050
     duration = 0.5
     t = np.linspace(0, duration, int(sample_rate * duration))
