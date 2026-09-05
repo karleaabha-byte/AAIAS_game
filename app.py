@@ -33,6 +33,10 @@ st.markdown(
     """
     <style>
 
+    /* ========================================================
+       MAIN PAGE
+       ======================================================== */
+
     .stApp {
         background:
             linear-gradient(
@@ -63,6 +67,11 @@ st.markdown(
         text-shadow: 0 0 8px rgba(243, 156, 18, 0.4);
     }
 
+
+    /* ========================================================
+       TABS
+       ======================================================== */
+
     .stTabs [data-baseweb="tab-list"] {
         gap: 6px;
     }
@@ -82,17 +91,32 @@ st.markdown(
         border: 1px solid #d4af37;
     }
 
+
+    /* ========================================================
+       EXPANDERS
+       ======================================================== */
+
     div[data-testid="stExpander"] {
         border: 1px solid #5a3d8a;
         border-radius: 10px;
         background-color: #2d1f42;
     }
 
+
+    /* ========================================================
+       METRICS
+       ======================================================== */
+
     div[data-testid="stMetricValue"] {
         color: #f39c12;
         font-size: 1.8rem;
         font-family: monospace;
     }
+
+
+    /* ========================================================
+       BUTTONS
+       ======================================================== */
 
     .stButton > button {
         background-color: #5a3d8a;
@@ -111,6 +135,11 @@ st.markdown(
         box-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
     }
 
+
+    /* ========================================================
+       CASE FILE
+       ======================================================== */
+
     .case-file {
         background: rgba(45, 31, 66, 0.85);
         border: 1px solid #5a3d8a;
@@ -120,6 +149,11 @@ st.markdown(
         margin: 15px 0;
         box-shadow: 0 5px 25px rgba(0, 0, 0, 0.35);
     }
+
+
+    /* ========================================================
+       BACKGROUND
+       ======================================================== */
 
     .background-section {
         background: #2d1f42;
@@ -145,14 +179,10 @@ st.markdown(
         line-height: 1.5;
     }
 
+
     /* ========================================================
        START SCREEN
        ======================================================== */
-
-    .game-title {
-        text-align: center;
-        padding: 35px 20px 15px 20px;
-    }
 
     .game-title-main {
         color: #d4af37;
@@ -160,9 +190,11 @@ st.markdown(
         font-size: 3.2rem;
         font-weight: bold;
         letter-spacing: 6px;
+        text-align: center;
         text-shadow:
             0 0 10px rgba(212, 175, 55, 0.5),
             0 0 25px rgba(212, 175, 55, 0.2);
+        padding-top: 35px;
     }
 
     .game-title-sub {
@@ -170,7 +202,9 @@ st.markdown(
         font-family: monospace;
         font-size: 1rem;
         letter-spacing: 3px;
+        text-align: center;
         margin-top: 8px;
+        margin-bottom: 25px;
     }
 
     .opening-story {
@@ -178,7 +212,7 @@ st.markdown(
         border: 1px solid #5a3d8a;
         border-left: 4px solid #d4af37;
         border-radius: 8px;
-        padding: 28px;
+        padding: 30px;
         margin: 20px 0;
         line-height: 1.8;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
@@ -200,7 +234,14 @@ st.markdown(
         border-bottom: 1px solid #5a3d8a;
         padding: 15px 0;
         margin: 18px 0;
+        text-align: center;
+        letter-spacing: 1px;
     }
+
+
+    /* ========================================================
+       UNLOCKED ACCESS
+       ======================================================== */
 
     .unlock-box {
         background: #21152d;
@@ -219,6 +260,11 @@ st.markdown(
         letter-spacing: 1px;
     }
 
+
+    /* ========================================================
+       LOCKED INTERROGATION
+       ======================================================== */
+
     .locked-box {
         background: #21152d;
         border: 1px solid #705d7d;
@@ -236,6 +282,7 @@ st.markdown(
         font-size: 1.2rem;
         letter-spacing: 1px;
     }
+
 
     /* ========================================================
        LAB NOTE
@@ -257,6 +304,7 @@ st.markdown(
     .note-line {
         margin: 7px 0;
     }
+
 
     /* ========================================================
        STORAGE RIDDLE
@@ -298,6 +346,7 @@ st.markdown(
         font-style: italic;
         margin-top: 14px;
     }
+
 
     /* ========================================================
        RECEIPT
@@ -344,6 +393,7 @@ st.markdown(
         color: #999;
     }
 
+
     /* ========================================================
        STATEMENTS
        ======================================================== */
@@ -377,6 +427,7 @@ st.markdown(
         margin-top: 8px;
     }
 
+
     /* ========================================================
        SUSPECT
        ======================================================== */
@@ -388,6 +439,7 @@ st.markdown(
         margin: 8px 0;
         border-radius: 4px;
     }
+
 
     /* ========================================================
        QUOTE
@@ -404,6 +456,7 @@ st.markdown(
         color: #f0e7d8;
     }
 
+
     /* ========================================================
        LOG
        ======================================================== */
@@ -415,6 +468,7 @@ st.markdown(
         padding: 5px 0;
         border-bottom: 1px dotted #5a3d8a;
     }
+
 
     /* ========================================================
        CLUE CHIP
@@ -430,6 +484,7 @@ st.markdown(
         font-size: 0.75rem;
         border-radius: 4px;
     }
+
 
     /* ========================================================
        FINAL REPORT
@@ -722,9 +777,7 @@ def render_receipt(
 
         redacted_values = []
 
-    html_output = (
-        '<div class="receipt">'
-    )
+    html_output = '<div class="receipt">'
 
     html_output += (
         '<div class="receipt-title">'
@@ -744,9 +797,7 @@ def render_receipt(
         'Employee PIN: '
     )
 
-    for index, digit in enumerate(
-        digits
-    ):
+    for index, digit in enumerate(digits):
 
         is_redacted = (
             index < len(redacted_values)
@@ -771,6 +822,7 @@ def render_receipt(
             )
 
     html_output += "</div>"
+
     html_output += "</div>"
 
     st.markdown(
@@ -795,6 +847,7 @@ def render_clue(
 
         st.write(clue)
         return
+
 
     # ========================================================
     # LABORATORY
@@ -826,6 +879,7 @@ def render_clue(
                 clue["description"]
             )
 
+
     # ========================================================
     # STORAGE
     # ========================================================
@@ -855,6 +909,7 @@ def render_clue(
             st.write(
                 clue["description"]
             )
+
 
     # ========================================================
     # CAFETERIA
@@ -933,204 +988,164 @@ def reset_case():
 
 if not st.session_state.case_started:
 
+    # --------------------------------------------------------
+    # TITLE
+    # --------------------------------------------------------
+
     st.markdown(
         """
-        <div class="game-title">
+        <div class="game-title-main">
+            🧟 ZOM-MOLE HUNTER
+        </div>
 
-            <div class="game-title-main">
-                🧟 ZOM-MOLE HUNTER
+        <div class="game-title-sub">
+            A NOIR DETECTIVE INVESTIGATION
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # --------------------------------------------------------
+    # CASE FILE / BACKGROUND STORY
+    # --------------------------------------------------------
+
+    st.markdown(
+        """
+        <div class="opening-story">
+
+            <div class="opening-label">
+                📁 CASE FILE
             </div>
 
-            <div class="game-title-sub">
-                A NOIR DETECTIVE INVESTIGATION
+            <div class="opening-label">
+                CLASSIFIED — NIGHT SHIFT INVESTIGATION
             </div>
+
+            <h2>
+                THE NIGHT SHIFT INCIDENT
+            </h2>
+
+            <p>
+                <b>12:18 AM.</b>
+            </p>
+
+            <p>
+                The research facility should have been asleep.
+            </p>
+
+            <p>
+                Instead, emergency lights are flashing,
+                a laboratory alarm is screaming through the
+                corridors, and six experimental filter
+                cartridges have disappeared from Storage.
+            </p>
+
+            <p>
+                At first, security believed it was an
+                equipment failure.
+            </p>
+
+            <p>
+                Then they found the broken vial.
+            </p>
+
+            <p>
+                Then the ventilation panel.
+            </p>
+
+            <p>
+                Then someone noticed that three minutes of
+                corridor camera footage had vanished.
+            </p>
+
+            <div class="opening-warning">
+                FIVE PEOPLE WERE STILL INSIDE THE FACILITY.
+            </div>
+
+            <p>
+                One of them is lying.
+            </p>
+
+            <p>
+                Possibly more than one.
+            </p>
+
+            <p>
+                But finding a liar is not enough.
+                You need to determine which lie actually
+                connects to the missing materials.
+            </p>
+
+            <p>
+                You have <b>12 actions</b> before the
+                investigation window closes.
+            </p>
+
+            <p>
+                Search the rooms. Examine the evidence.
+                Crack the restricted access PIN.
+                Interrogate the employees.
+                Then decide who is the Mole.
+            </p>
 
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-    start_tab, case_tab = st.tabs(
-        [
-            "🧟 ZOM-MOLE HUNTER",
-            "📁 CASE FILE"
-        ]
+    st.write("")
+
+    # --------------------------------------------------------
+    # IDENTIFY YOURSELF
+    # --------------------------------------------------------
+
+    st.markdown(
+        """
+        <div
+            style="
+                color:#d4af37;
+                font-family:monospace;
+                font-weight:bold;
+                font-size:1.15rem;
+                letter-spacing:2px;
+                margin-top:25px;
+                margin-bottom:12px;
+            "
+        >
+            🕵️ IDENTIFY YOURSELF
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    # ========================================================
-    # START TAB
-    # ========================================================
+    detective_name = st.text_input(
+        "Enter your detective name",
+        placeholder="e.g. Detective Morgan",
+        key="start_detective_name",
+    )
 
-    with start_tab:
+    st.write("")
 
-        st.markdown(
-            """
-            <div class="opening-story">
+    if st.button(
+        "🔎 ENTER THE CASE",
+        use_container_width=True,
+    ):
 
-                <div class="opening-label">
-                    CLASSIFIED — NIGHT SHIFT INVESTIGATION
-                </div>
+        if not detective_name.strip():
 
-                <h2>
-                    THE NIGHT SHIFT INCIDENT
-                </h2>
-
-                <p>
-                    <b>12:18 AM.</b>
-                </p>
-
-                <p>
-                    The research facility should have been asleep.
-                </p>
-
-                <p>
-                    Instead, emergency lights are flashing,
-                    a laboratory alarm is screaming through the
-                    corridors, and six experimental filter
-                    cartridges have disappeared from Storage.
-                </p>
-
-                <p>
-                    At first, security believed it was an
-                    equipment failure.
-                </p>
-
-                <p>
-                    Then they found the broken vial.
-                </p>
-
-                <p>
-                    Then the ventilation panel.
-                </p>
-
-                <p>
-                    Then someone noticed that three minutes of
-                    corridor camera footage had vanished.
-                </p>
-
-                <div class="opening-warning">
-                    FIVE PEOPLE WERE STILL INSIDE THE FACILITY.
-                </div>
-
-                <p>
-                    One of them is lying.
-                </p>
-
-                <p>
-                    Possibly more than one.
-                </p>
-
-                <p>
-                    But finding a liar is not enough.
-                    You need to determine which lie actually
-                    connects to the missing materials.
-                </p>
-
-                <p>
-                    You have <b>12 actions</b> before the
-                    investigation window closes.
-                </p>
-
-                <p>
-                    Search the rooms. Examine the evidence.
-                    Crack the restricted access PIN.
-                    Interrogate the employees.
-                    Then decide who is the Mole.
-                </p>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            "### 🕵️ Identify Yourself"
-        )
-
-        detective_name = st.text_input(
-            "Enter your detective name",
-            placeholder="e.g. Detective Morgan",
-            key="start_detective_name",
-        )
-
-        st.write("")
-
-        if st.button(
-            "🔎 ENTER THE CASE",
-            use_container_width=True,
-        ):
-
-            if not detective_name.strip():
-
-                st.warning(
-                    "Enter your detective name before beginning."
-                )
-
-            else:
-
-                st.session_state.detective_name = (
-                    detective_name.strip()
-                )
-
-                st.session_state.case_started = True
-
-                st.rerun()
-
-    # ========================================================
-    # CASE FILE TAB
-    # ========================================================
-
-    with case_tab:
-
-        st.subheader(
-            "📁 CASE FILE: THE NIGHT SHIFT INCIDENT"
-        )
-
-        st.markdown(
-            '<div class="case-file">',
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            getattr(
-                case,
-                "CASE_INTRO",
-                "A mysterious incident has occurred."
+            st.warning(
+                "Enter your detective name before beginning."
             )
-        )
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
+        else:
 
-        st.markdown(
-            """
-            <div class="background-section">
+            st.session_state.detective_name = (
+                detective_name.strip()
+            )
 
-                <div class="background-title">
-                    INVESTIGATION OBJECTIVE
-                </div>
+            st.session_state.case_started = True
 
-                <div class="background-entry">
-                    Determine which employee's statements,
-                    access and movements connect to the incident.
-                </div>
-
-                <div class="background-entry">
-                    You are not given a list of guilty suspects.
-                    You must build the connection yourself.
-                </div>
-
-                <div class="background-entry">
-                    Physical evidence and employee statements
-                    may contradict one another.
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+            st.rerun()
 
     st.stop()
 
@@ -1435,7 +1450,7 @@ if game.game_over:
 
 
 # ============================================================
-# MAIN TABS
+# MAIN GAME TABS
 # ============================================================
 
 (
@@ -1993,7 +2008,10 @@ with tab_accuse:
             "🥤 Cafeteria restocking receipt",
     }
 
-    # Physical clues
+    # ========================================================
+    # PHYSICAL CLUES
+    # ========================================================
+
     for clue in getattr(
         game.evidence,
         "clues_found",
@@ -2011,7 +2029,10 @@ with tab_accuse:
                 label
             )
 
-    # Statements
+    # ========================================================
+    # STATEMENTS
+    # ========================================================
+
     for character in case.CHARACTERS:
 
         statements = get_statement_data(
