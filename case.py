@@ -683,15 +683,21 @@ LAB_CLUE = {
     ]
 }
 
-
-# ------------------------------------------------------------
+# ============================================================
 # STORAGE
-# ------------------------------------------------------------
-# The answer is BREEZE, but it is NOT displayed anywhere.
-# The player must solve the riddle.
-# ------------------------------------------------------------
+# ============================================================
 
 STORAGE_CLUE = {
+    "title": "THE SCRATCHED INVENTORY BOARD",
+
+    "lines": [
+        {"text": "Boxes counted: 18", "struck": False},
+        {"text": "Filter cartridges: 24", "struck": True},
+        {"text": "Filter cartridges: 18", "struck": False},
+        {"text": "Ventilation override — 11:50 PM", "struck": False},
+        {"text": "Maintenance Chief — OFF SHIFT", "struck": False},
+        {"text": "Supply Coordinator — ON SHIFT", "struck": False},
+    ],
 
     "riddle": [
         "I cannot be seen, but I shake every leaf.",
@@ -703,12 +709,12 @@ STORAGE_CLUE = {
 }
 
 
-# ------------------------------------------------------------
+# ============================================================
 # CAFETERIA
-# ------------------------------------------------------------
+# ============================================================
 
 CAFETERIA_CLUE = {
-    "title": "THE VENDING MACHINE RECEIPT",
+    "title": "RESTOCKING LOG — MACHINE #3",
 
     "job": "SUPPLY RESTOCK",
 
@@ -720,7 +726,7 @@ CAFETERIA_CLUE = {
     ],
 
     "redacted": [
-        False,
+        True,
         True,
         False,
         False
@@ -730,7 +736,6 @@ CAFETERIA_CLUE = {
         "Restocking began at 11:50 PM — exactly when the "
         "corridor cameras went dark."
     )
-    
 }
 
 
@@ -781,3 +786,12 @@ def get_profile(character):
     Return the profile for a character.
     """
     return PROFILES[character]
+
+def get_answer(character, question_key, tell_truth=True):
+    """
+    Return the interrogation answer for a character.
+
+    The tell_truth parameter is accepted because game.py
+    uses it when handling the Mole's responses.
+    """
+    return ANSWERS[character][question_key]["answer"]
