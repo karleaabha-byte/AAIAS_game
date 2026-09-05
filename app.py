@@ -1673,41 +1673,30 @@ with tab_evidence:
 
 with tab_rooms:
 
-    st.subheader(
-        "🏚️ Crime Scenes"
-    )
+    st.subheader("🏚️ Crime Scenes")
 
     st.write(
         f"You have **{game.actions_remaining} actions** remaining."
     )
 
-    # --------------------------------------------------------
-    # THREE ROOMS
-    # --------------------------------------------------------
+    room_descriptions = {
+        "Laboratory":
+            "The centrifuge room where the incident began.",
 
-    cols = st.columns(3)
+        "Storage":
+            "Shelves, inventory sheets and the ventilation panel.",
 
-    for col, room in zip(
-        cols,
-        case.ROOMS
-    ):
+        "Cafeteria":
+            "A vending machine, a restocking cart and one suspicious receipt."
+    }
+
+    cols = st.columns(len(case.ROOMS))
+
+    for col, room in zip(cols, case.ROOMS):
 
         with col:
 
-            st.markdown(
-                f"### {room}"
-            )
-
-            room_descriptions = {
-                "Laboratory":
-                    "The centrifuge room where the incident began.",
-
-                "Storage":
-                    "Shelves, inventory sheets and the ventilation panel.",
-
-                "Cafeteria":
-                    "A vending machine, a restocking cart and one suspicious receipt."
-            }
+            st.markdown(f"### {room}")
 
             st.caption(
                 room_descriptions.get(
@@ -1716,83 +1705,231 @@ with tab_rooms:
                 )
             )
 
-            # ------------------------------------------------
-            # ALREADY VISITED
-            # ------------------------------------------------
+            # =================================================
+            # ALREADY INVESTIGATED
+            # =================================================
 
             if room in game.visited_rooms:
 
-                st.success(
-                    "✓ Location investigated"
-                )
+                st.success("✓ Location investigated")
 
-                clue = None
+                # IMPORTANT:
+                # Use the clue stored by game.py.
+                # Do NOT call get_storage_clue() again.
+                clue = game.visited_rooms[room]
 
-                # Recover clue from the relevant case data
-                if room == "Laboratory":
+                if not isinstance(clue, dict):
 
-                    clue = case.get_lab_clue()
+                    st.write(clue)
 
-                    st.markdown(
-                        f"**{clue['title']}**"
+                else:
+
+                    # -----------------------------------------
+                    # TITLE
+                    # -----------------------------------------
+
+                    if clue.get("title"):
+
+                        st.markdown(
+                            f"**{clue['title']}**"
+                        )
+
+                    # -----------------------------------------
+                    # LABORATORY
+                    # -----------------------------------------
+
+                    if room == "Laboratory":
+
+                        if clue.get("lines"):
+
+                            st.markdown(
+                                render_lab_note(
+                                    clue["lines"]
+                                ),
+                                unsafe_allow_html=True
+                            )
+
+                        if clue.get("note"):
+
+                            st.info(clue["note"])
+
+                        st.caption(
+                            "Examine the wording carefully. "
+                            "Small details may matter later."
+                        )
+
+                    # -----------------------------------------
+                    # STORAGE
+                    # -----------------------------------------
+
+                    elif room == "Storage":
+
+                        if clue.get("lines"):
+
+                            st.markdown(
+                                render_riddle_board(
+                                    clue["lines"]
+                                ),
+                                unsafe_allow_html=True
+                            )
+
+                        if clue.get("note"):
+
+                            st.info(clue["note"])
+
+                        if clue.get("hidden_note"):
+
+                            st.caption(
+                                clue["hidden_note"]
+                            )
+
+                        st.caption(
+                            "The inventory may contain more information "
+                            "than it appears to."
+                        )
+
+                    # -----------------------------------------
+                    # CAFETERIA
+                    # -----------------------------------------
+
+                    elif room == "Cafeteria":
+
+                        if all(
+                            key in clue
+                            for key in (
+                                "job",
+                                "pin_digits",
+                                "redacted"
+                            )
+                        ):
+
+                            st.markdown(
+                                render_receipt(
+                                    clue["job"],
+                                    clue["pin_digits"],
+                                    clue["redacted"]
+                                ),
+                                unsafe_allow_html=True
+                            )
+
+                        if clue.get("note"):
+
+                            st.info(clue["note"])
+
+                        if clue.get("hidden_note"):
+
+                            st.caption(
+                                clue["hidden_note"]
+                            )
+
+                        # -------------------------------------
+                        # PIN
+                        # -------------------------------------
+
+                        st.divider()
+
+                        st.markdown(
+                            "**Crack the Employee PIN**"
+                        )
+
+                        if game.pin_cracked:
+
+                            st.success(
+                                "🔓 PIN CRACKED"
+                            )
+
+                        else:
+
+                            pin_guess = st.text_input(
+                                "Enter four digits",
+                                max_chars=4,
+                                key="pin_guess"
+                            )
+
+                            if st.button(
+                                "🔓 VERIFY PIN",
+                                key="verify_pin",
+                                use_container_width=True
+                            ):
+
+                                # game.py returns bool
+                                pin_correct = game.attempt_pin(
+                                    pin_guess
+                                )
+
+                                if pin_correct:
+
+                                    autoplay_audio(
+                                        success_chime()
+                                    )
+
+                                    st.success(
+                                        "🔓 PIN CRACKED"
+                                    )
+
+                                else:
+
+                                    st.error(
+                                        "❌ Incorrect PIN."
+                                    )
+
+            # =================================================
+            # NOT INVESTIGATED
+            # =================================================
+
+            else:
+
+                if st.button(
+                    f"🔎 Investigate {room}",
+                    key=f"visit_{room}",
+                    disabled=not game.can_act(),
+                    use_container_width=True
+                ):
+
+                    # game.py returns:
+                    # (success, clue/message)
+
+                    visit_result = game.visit_room(
+                        room
                     )
 
-                    st.markdown(
-                        render_lab_note(
-                            clue["lines"]
-                        ),
-                        unsafe_allow_html=True
-                    )
+                    # -----------------------------------------
+                    # SAFELY HANDLE THE RETURN VALUE
+                    # -----------------------------------------
 
-                    st.caption(
-                        "The first letters may be worth remembering."
-                    )
+                    if (
+                        isinstance(visit_result, tuple)
+                        and len(visit_result) >= 2
+                    ):
 
-                elif room == "Storage":
+                        success = visit_result[0]
+                        payload = visit_result[1]
 
-                    clue = case.get_storage_clue()
+                    else:
 
-                    st.markdown(
-                        f"**{clue['title']}**"
-                    )
+                        success = False
+                        payload = (
+                            "The investigation returned "
+                            "an unexpected result."
+                        )
 
-                    st.markdown(
-                        render_riddle_board(
-                            clue["lines"]
-                        ),
-                        unsafe_allow_html=True
-                    )
+                    if success:
 
-                    st.caption(
-                        "Someone clearly didn't want the original "
-                        "inventory count left intact."
-                    )
+                        autoplay_audio(
+                            typewriter_click()
+                        )
 
-                elif room == "Cafeteria":
+                        st.session_state.last_room_result = (
+                            payload
+                        )
 
-                    clue = case.get_cafeteria_clue()
+                        st.rerun()
 
-                    st.markdown(
-                        f"**{clue['title']}**"
-                    )
+                    else:
 
-                    st.markdown(
-                        render_receipt(
-                            clue["job"],
-                            clue["pin_digits"],
-                            clue["redacted"]
-                        ),
-                        unsafe_allow_html=True
-                    )
-
-                    st.info(
-                        clue["note"]
-                    )
-
-                    st.caption(
-                        clue["hidden_note"]
-                    )
-
+                        st.warning(
+                            str(payload)
+                        )
                     # ----------------------------------------
                     # PIN
                     # ----------------------------------------
