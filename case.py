@@ -153,8 +153,10 @@ def get_lab_clue():
 _RIDDLE_LINES = [
     "I cannot be seen, but I shake every leaf.",
     "I fill the sails of ships, yet I weigh nothing at all.",
+    "I caress your skin on a warm afternoon, gentle and soft.",
     "Sailors bless me on a calm day, and curse me when I turn into a storm.",
     "What am I?",
+
 ]
 _RIDDLE_DECOY = "I can also 'travel' through a crowd as a rumor."
 _RIDDLE_HELPER = "Scrawled beneath, in different handwriting: something you'd feel standing on a beach."
