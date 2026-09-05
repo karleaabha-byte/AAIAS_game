@@ -6,7 +6,7 @@ from ai_agent import MoleAI
 from evidence import EvidenceBoard
 
 ROOMS = ["Laboratory", "Storage", "Cafeteria"]
-TOTAL_BUDGET = 9
+TOTAL_BUDGET = 12
 
 
 class GameState:
