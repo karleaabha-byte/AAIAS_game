@@ -27,6 +27,7 @@ LAB_NUMBER = 4
 STORAGE_ANSWER = "BREEZE"
 STORAGE_NUMBER = len(STORAGE_ANSWER)
 
+# Final PIN = 4619
 CORRECT_PIN = f"{LAB_NUMBER}{STORAGE_NUMBER}19"
 
 
@@ -662,19 +663,37 @@ ANSWERS = {
 # ROOM CLUES
 # ============================================================
 
+# ------------------------------------------------------------
+# LABORATORY
+# ------------------------------------------------------------
+# IMPORTANT:
+# The first letters spell FOUR, but they are deliberately
+# NOT highlighted in the UI.
+#
+# Player has to notice the acrostic themselves.
+# ------------------------------------------------------------
+
 LAB_CLUE = {
     "title": "THE LABORATORY NOTE",
     "lines": [
-        ("F", "ilter pressure was stable before midnight."),
-        ("O", "ne centrifuge cycle was interrupted manually."),
-        ("U", "nused cartridges were stored elsewhere."),
-        ("R", "aven's workstation was still active.")
+        "Filter pressure was stable before midnight.",
+        "One centrifuge cycle was interrupted manually.",
+        "Unused cartridges were stored elsewhere.",
+        "Raven's workstation was still active."
     ]
 }
 
 
+# ------------------------------------------------------------
+# STORAGE
+# ------------------------------------------------------------
+# The answer is BREEZE, but it is NOT displayed anywhere.
+# The player must solve the riddle.
+# ------------------------------------------------------------
+
 STORAGE_CLUE = {
     "title": "THE SCRATCHED INVENTORY BOARD",
+
     "lines": [
         {
             "text": "Boxes counted: 18",
@@ -704,15 +723,40 @@ STORAGE_CLUE = {
             "text": "Someone scratched out the original count.",
             "helper": True
         }
+    ],
+
+    "riddle": [
+        "I cannot be seen, but I shake every leaf.",
+        "I fill the sails of ships, yet I weigh nothing at all.",
+        "I can carry a whisper farther than the person who spoke it.",
+        "Sailors welcome me when I am gentle, but fear what I become when I grow wild.",
+        "What am I?"
     ]
 }
 
 
+# ------------------------------------------------------------
+# CAFETERIA
+# ------------------------------------------------------------
+
 CAFETERIA_CLUE = {
     "title": "THE VENDING MACHINE RECEIPT",
+
     "job": "SUPPLY RESTOCK",
-    "pin_digits": ["4", "?", "1", "9"],
-    "redacted": [False, True, False, False],
+
+    "pin_digits": [
+        "4",
+        "?",
+        "1",
+        "9"
+    ],
+
+    "redacted": [
+        False,
+        True,
+        False,
+        False
+    ],
 
     "note": (
         "Restocking began at 11:50 PM — exactly when the "
@@ -741,8 +785,10 @@ def get_storage_clue(decision=None):
     """
     Return the Storage clue.
 
-    `decision` is accepted for compatibility with game.py.
-    The current clue does not change based on the Mole's decision.
+    The decision parameter is accepted because game.py passes
+    the Mole's room decision to this function.
+
+    The clue itself does not change based on that decision.
     """
     return STORAGE_CLUE
 
@@ -751,15 +797,17 @@ def get_cafeteria_clue(decision=None):
     """
     Return the Cafeteria clue.
 
-    `decision` is accepted for compatibility with game.py.
-    The current clue does not change based on the Mole's decision.
+    The decision parameter is accepted because game.py passes
+    the Mole's room decision to this function.
+
+    The clue itself does not change based on that decision.
     """
     return CAFETERIA_CLUE
 
 
 def get_question(character, question_key):
     """
-    Return the stored answer information for a character/question.
+    Return the stored answer information for a character.
     """
     return ANSWERS[character][question_key]
 
