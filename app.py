@@ -773,19 +773,10 @@ def render_clue(room, clue):
                 f"### {safe_html(clue['title'])}"
             )
 
-        # Inventory board
-        if clue.get("lines"):
 
-            render_storage_board(
-                clue["lines"]
-            )
 
         # Actual riddle
         if clue.get("riddle"):
-
-            st.markdown(
-                "#### Something written in the margin..."
-            )
 
             render_storage_riddle(
                 clue["riddle"]
