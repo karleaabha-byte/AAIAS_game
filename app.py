@@ -1,61 +1,86 @@
 """
-app.py - Streamlit front-end for "Who Is the Mole?"
+app.py - Streamlit front-end for "Who Is the Mole?" — NOIR EDITION
 
 Run with:
     streamlit run app.py
-(Theme base colors come from .streamlit/config.toml)
 """
 import streamlit as st
 
 import case
 import optimal_path
 from game import GameState, TOTAL_BUDGET
+import sounds
 
 st.set_page_config(page_title="Who Is the Mole?", page_icon="🧟", layout="wide")
 
-# ---------- CSS: dark blue theme + physical-clue styling ----------
+# ---------- NOIR AESTHETIC: Dark purples + amber accents ----------
 st.markdown(
     """
-    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Crimson+Text:ital@0;1&display=swap" rel="stylesheet">
     <style>
-    .stApp { background: linear-gradient(180deg, #0B1220 0%, #0E1A2E 100%); }
-    h1, h2, h3 { color: #93C5FD !important; }
+    .stApp {
+        background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 50%, #1f1135 100%);
+        color: #e0d5d5;
+    }
+    body { font-family: 'Crimson Text', serif; }
+    h1 { 
+        color: #d4af37; 
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 2.5rem;
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        letter-spacing: 3px;
+    }
+    h2, h3 { 
+        color: #f39c12;
+        font-family: 'JetBrains Mono', monospace;
+        text-shadow: 0 0 8px rgba(243, 156, 18, 0.4);
+    }
     .stTabs [data-baseweb="tab-list"] { gap: 6px; }
     .stTabs [data-baseweb="tab"] {
-        background-color: #131C31;
+        background-color: #3d2860;
         border-radius: 8px 8px 0 0;
-        padding: 8px 16px;
-        color: #93C5FD;
+        padding: 10px 18px;
+        color: #c9a961;
+        font-family: 'JetBrains Mono', monospace;
+        border: 1px solid #5a3d8a;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #1E3A5F !important;
-        color: #E2E8F0 !important;
+        background-color: #5a3d8a !important;
+        color: #d4af37 !important;
+        border: 1px solid #d4af37;
     }
     div[data-testid="stExpander"] {
-        border: 1px solid #1E3A5F;
+        border: 1px solid #5a3d8a;
         border-radius: 10px;
-        background-color: #101A2E;
+        background-color: #2d1f42;
     }
-    div[data-testid="stMetricValue"] { color: #60A5FA; }
+    div[data-testid="stMetricValue"] { 
+        color: #f39c12; 
+        font-size: 1.8rem;
+        font-family: 'JetBrains Mono', monospace;
+    }
     .stButton>button {
-        background-color: #1D4ED8;
-        color: #E2E8F0;
+        background-color: #5a3d8a;
+        color: #d4af37;
         border-radius: 8px;
-        border: 1px solid #3B82F6;
+        border: 1.5px solid #d4af37;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: bold;
+        box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+        transition: all 0.2s ease;
     }
     .stButton>button:hover {
-        background-color: #2563EB;
-        border: 1px solid #93C5FD;
+        background-color: #d4af37;
+        color: #1a0f2e;
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
     }
-
-    /* --- Laboratory: pinned note --- */
     .note-card {
         background: #f4ecd8;
         color: #3a3226;
         font-family: 'Kalam', cursive;
         padding: 22px 24px 16px 24px;
         border-radius: 2px;
-        box-shadow: 3px 5px 14px rgba(0,0,0,0.55);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.7);
         transform: rotate(-1deg);
         position: relative;
         margin: 14px 4px;
@@ -69,22 +94,13 @@ st.markdown(
         left: 22px;
         font-size: 1.5rem;
     }
-    .note-signoff {
-        margin-top: 10px;
-        font-size: 0.8rem;
-        opacity: 0.6;
-        font-family: 'Kalam', cursive;
-    }
     .hint-letter {
         font-size: 1.6rem;
         font-weight: 800;
         color: #b91c1c;
         text-decoration: underline;
-        text-decoration-color: #b91c1c;
         margin-right: 2px;
     }
-
-    /* --- Storage: scratched riddle wall --- */
     .riddle-board {
         background-color: #10151f;
         background-image:
@@ -99,6 +115,7 @@ st.markdown(
         border: 2px solid #334155;
         line-height: 1.9;
         margin: 14px 4px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.7);
     }
     .riddle-line { margin: 2px 0; }
     .scratched {
@@ -107,12 +124,9 @@ st.markdown(
         text-decoration-color: #ef4444;
         color: #94a3b8;
         display: inline-block;
-        transform: rotate(-1.5deg);
     }
     .decoy-line { color: #fbbf24; font-style: italic; }
     .helper-line { color: #34d399; }
-
-    /* --- Cafeteria: printed receipt --- */
     .receipt {
         background: #fdfdfd;
         color: #111;
@@ -121,7 +135,7 @@ st.markdown(
         border: 1px dashed #999;
         max-width: 320px;
         margin: 14px auto;
-        box-shadow: 2px 3px 10px rgba(0,0,0,0.5);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.7);
     }
     .receipt-title { text-align: center; font-weight: bold; margin-bottom: 8px; }
     .pin-digit {
@@ -134,18 +148,76 @@ st.markdown(
         font-size: 1.1rem;
     }
     .pin-digit.redacted { color: #bbb; }
+
+    /* --- Evidence Board --- */
+    .evidence-grid {
+        background: #2d1f42;
+        border: 2px solid #d4af37;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 10px 0;
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+    }
+    .suspect-card {
+        background: #3d2860;
+        border-left: 4px solid #f39c12;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .guilt-bar {
+        background: #1a0f2e;
+        border-radius: 4px;
+        height: 20px;
+        overflow: hidden;
+        margin: 8px 0;
+    }
+    .guilt-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #f39c12 0%, #d4af37 50%, #e74c3c 100%);
+        transition: width 0.3s ease;
+    }
+    .contradiction-alert {
+        background: #8b0000;
+        border-left: 4px solid #ff6b6b;
+        color: #ffb3b3;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .log-entry {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: #c9a961;
+        padding: 4px 0;
+        border-bottom: 1px dotted #5a3d8a;
+        animation: typewrite 0.2s ease-in;
+    }
+    @keyframes typewrite {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    .suspicion-meter {
+        background: #1a0f2e;
+        border: 2px solid #d4af37;
+        border-radius: 8px;
+        padding: 12px;
+        margin: 10px 0;
+    }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
     """,
     unsafe_allow_html=True,
 )
 
 
-# ---------- clue render helpers ----------
+# ---------- Clue renderers ----------
 def render_lab_note(lines):
     html = '<div class="note-card">'
     for letter, rest in lines:
         html += f'<div><span class="hint-letter">{letter}</span>{rest}</div>'
-    html += '<div class="note-signoff">— a note pinned to the corkboard —</div>'
     html += "</div>"
     return html
 
@@ -179,111 +251,154 @@ def render_receipt(job, pin_digits, redacted):
     return html
 
 
-# ---------- session state ----------
+def render_evidence_board(game):
+    """Render the detective board with suspect guilt scores and contradictions."""
+    html = '<div class="evidence-grid">'
+    html += '<h3 style="color: #d4af37; margin-top: 0;">EVIDENCE BOARD</h3>'
+
+    # Contradictions
+    if game.evidence.contradictions:
+        for contradiction in game.evidence.contradictions:
+            html += f'<div class="contradiction-alert">🚨 {contradiction["detail"]}</div>'
+
+    # Suspect guilt scores
+    html += '<div style="margin-top: 16px;">'
+    for character in case.CHARACTERS:
+        guilt = game.evidence.get_guilt_score(character)
+        guilt_pct = int((guilt / 100) * 100)
+        location = case.PROFILES[character]["location"]
+        job = case.PROFILES[character]["job"]
+        html += f'''
+        <div class="suspect-card">
+            <div style="font-weight: bold; color: #d4af37;">{character}</div>
+            <div style="font-size: 0.85rem; color: #c9a961;">{job} • {location}</div>
+            <div class="guilt-bar">
+                <div class="guilt-fill" style="width: {guilt_pct}%;"></div>
+            </div>
+            <div style="font-size: 0.8rem; color: #f39c12;">Suspicion: {guilt}/100</div>
+        </div>
+        '''
+    html += '</div></div>'
+    return html
+
+
+# ---------- Session state ----------
 if "game" not in st.session_state:
     st.session_state.game = GameState()
 if "hints_used" not in st.session_state:
     st.session_state.hints_used = 0
 if "researcher_name" not in st.session_state:
     st.session_state.researcher_name = ""
+if "play_sound" not in st.session_state:
+    st.session_state.play_sound = False
 
 game = st.session_state.game
 name = st.session_state.researcher_name
 
-st.title("🧟 Who Is the Mole?")
+st.title("🧟 WHO IS THE MOLE?")
 if name:
-    st.caption(f"Researcher {name} — 9 actions to find the mole before it's too late.")
+    st.caption(f"Detective Case File: {name} | 9 Actions Remaining")
 else:
-    st.caption("An adversarial-AI mystery — 9 actions to find the mole before it's too late.")
+    st.caption("A noir-tinged mystery awaits... 9 actions to crack the case.")
 
-# ---------- sidebar ----------
+# ---------- Sidebar ----------
 with st.sidebar:
-    st.header("Investigation Status")
+    st.header("CASE DOSSIER")
     if name:
-        st.write(f"🧑‍💼 **Researcher:** {name}")
-    st.metric("Actions remaining", game.actions_remaining)
+        st.write(f"**Detective:** {name}")
+    
+    st.subheader("Actions Remaining")
+    st.metric("", game.actions_remaining)
     st.progress(game.actions_used / TOTAL_BUDGET)
 
-    st.write(f"**Suspicion meter:** {game.suspicion}/100")
-    st.progress(game.suspicion / 100)
+    st.subheader("Suspicion Level")
+    st.write(f"{game.suspicion}/100")
+    col_sus = st.columns([1])
+    with col_sus[0]:
+        st.progress(game.suspicion / 100)
 
     HINT_LIMIT = 2
     if not game.game_over:
         if st.session_state.hints_used < HINT_LIMIT:
-            if st.button(f"💡 Get a hint ({HINT_LIMIT - st.session_state.hints_used} left)"):
+            if st.button(f"💡 Get a Hint ({HINT_LIMIT - st.session_state.hints_used} left)"):
                 st.session_state.hints_used += 1
                 st.info(optimal_path.get_hint(game))
         else:
-            st.caption("No hints left — you're on your own now.")
+            st.caption("*No hints remaining.*")
 
     st.divider()
-    if st.button("🔄 New Game"):
+    if st.button("🔄 START NEW CASE"):
         st.session_state.game = GameState()
         st.session_state.hints_used = 0
         st.rerun()
 
-    with st.expander("📜 Case Log"):
+    with st.expander("📋 CASE LOG"):
         if game.log:
-            for entry in game.log:
-                st.write(entry)
+            st.markdown('<div class="log-entry">' + '<br>'.join(game.log[-10:]) + '</div>', unsafe_allow_html=True)
         else:
-            st.write("Nothing logged yet.")
+            st.write("*No entries yet.*")
 
 st.markdown(case.CASE_INTRO)
 
-# ---------- end-of-game screen ----------
+# ---------- End-of-game screen ----------
 if game.game_over:
     st.divider()
     if game.result == "win":
-        st.success(f"✅ You accused **{game.accused}** — correct! The mole is caught.")
+        st.success(f"✅ CASE CLOSED: {game.accused} is the mole.")
+        st.audio(sounds.success_chime(), format="audio/wav")
     else:
-        st.error(f"❌ You accused **{game.accused}** — wrong! The real mole, {case.MOLE}, gets away.")
+        st.error(f"❌ CASE FAILED: {game.accused} was accused, but the true mole was {case.MOLE}.")
 
     stats = game.get_stats()
     perf = optimal_path.evaluate_performance(stats)
 
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("Case Report")
-        st.write(f"- Actions used: **{stats['actions_used']}**")
-        st.write(f"- Final suspicion: **{stats['suspicion']}/100**")
-        st.write(f"- Sabotage actions by the mole: **{stats['sabotage_count']}**")
-        st.write(f"- Help actions by the mole: **{stats['help_count']}**")
-        st.write(f"- Times the mole lied: **{stats['lie_count']}**")
-        st.write(f"- Contradiction caught: **{'Yes' if stats['contradiction_flagged'] else 'No'}**")
-        st.write(f"- PIN cracked: **{'Yes' if stats['pin_cracked'] else 'No'}**")
+        st.subheader("INVESTIGATION REPORT")
+        st.write(f"- Actions Used: **{stats['actions_used']}/9**")
+        st.write(f"- Final Suspicion: **{stats['suspicion']}/100**")
+        st.write(f"- Mole Sabotages: **{stats['sabotage_count']}**")
+        st.write(f"- Mole Helps: **{stats['help_count']}**")
+        st.write(f"- Lies Detected: **{stats['lie_count']}**")
+        st.write(f"- Contradictions Found: **{'Yes' if stats['contradiction_flagged'] else 'No'}**")
+        st.write(f"- PIN Cracked: **{'Yes' if stats['pin_cracked'] else 'No'}**")
     with col2:
-        st.subheader("Performance")
-        st.markdown(f"### Grade: {perf['grade']}")
+        st.subheader("VERDICT")
+        st.markdown(f"### {perf['grade']}")
         st.write(perf["message"])
 
     st.stop()
 
-# ---------- main tabs ----------
-tab_researcher, tab_rooms, tab_people, tab_accuse = st.tabs(
-    ["🧑‍💼 Researcher", "🏚️ Investigate Rooms", "🗣️ Question Suspects", "⚖️ Make an Accusation"]
+# ---------- Main tabs ----------
+tab_researcher, tab_evidence, tab_rooms, tab_people, tab_accuse = st.tabs(
+    ["🧑‍💼 DETECTIVE", "🔍 EVIDENCE", "🏚️ CRIME SCENES", "🗣️ INTERROGATIONS", "⚖️ ACCUSATION"]
 )
 
 with tab_researcher:
-    st.subheader("Sign in as the Researcher")
+    st.subheader("Detective Profile")
     entered = st.text_input(
-        "Your name", value=st.session_state.researcher_name, placeholder="e.g. Dr. Amara Osei"
+        "Your name (optional)", value=st.session_state.researcher_name, placeholder="e.g. Detective Osei"
     )
-    if st.button("Save name"):
+    if st.button("Register"):
         st.session_state.researcher_name = entered.strip()
         st.rerun()
-    if st.session_state.researcher_name:
-        st.success(f"Logged in as Researcher {st.session_state.researcher_name}.")
-    else:
-        st.info(
-            "Enter a name so the case log can address you properly "
-            "(purely cosmetic — you can still play without it)."
-        )
 
     st.divider()
-    st.subheader("Suspect Directory")
+    st.subheader("Suspects")
     for character in case.CHARACTERS:
-        st.write(f"- **{character}** — {case.PROFILES[character]['job']}")
+        job = case.PROFILES[character]["job"]
+        location = case.PROFILES[character]["location"]
+        st.write(f"**{character}** — {job} *(Last seen: {location})*")
+
+with tab_evidence:
+    st.subheader("Detective Board")
+    st.markdown(render_evidence_board(game), unsafe_allow_html=True)
+
+    if game.evidence.contradictions:
+        st.divider()
+        st.subheader("Flagged Contradictions")
+        for contradiction in game.evidence.contradictions:
+            st.warning(f"⚠️ {contradiction['detail']}")
 
 with tab_rooms:
     cols = st.columns(3)
@@ -304,18 +419,18 @@ with tab_rooms:
                         unsafe_allow_html=True,
                     )
                     st.divider()
-                    guess = st.text_input("Crack the PIN", key="pin_guess", max_chars=8)
-                    if st.button("Check PIN", key="check_pin"):
+                    guess = st.text_input("PIN Guess", key="pin_guess", max_chars=8, placeholder="e.g. 4619")
+                    if st.button("Verify PIN", key="check_pin"):
                         if game.attempt_pin(guess):
-                            st.success(
-                                "🔓 Correct! The log confirms this PIN belongs to the **Supply Coordinator**."
-                            )
+                            st.success("🔓 Correct PIN! Supply Coordinator confirmed.")
+                            st.audio(sounds.success_chime(), format="audio/wav")
                         else:
-                            st.warning("Not quite — double check your digits.")
+                            st.warning("Incorrect PIN. Double-check your digits.")
             else:
                 if st.button(f"Investigate {room}", key=f"visit_{room}", disabled=not game.can_act()):
                     ok, clue = game.visit_room(room)
                     if ok:
+                        st.audio(sounds.typewriter_click(), format="audio/wav")
                         st.rerun()
                     else:
                         st.warning(clue)
@@ -326,11 +441,13 @@ with tab_people:
         with st.expander(f"🧑 {character}", expanded=character not in game.asked):
             if character in game.asked:
                 qa = game.asked[character]
-                st.write(f"**You asked:** {question_lookup[qa['question']]}")
-                st.write(f"**Answer:** {qa['answer']}")
+                st.write(f"**Q:** {question_lookup[qa['question']]}")
+                st.write(f"**A:** _{qa['answer']}_")
+                if qa["lied"]:
+                    st.warning("⚠️ This answer was a lie.")
             else:
                 q_key = st.selectbox(
-                    "Choose a question",
+                    "Question",
                     options=[k for k, _ in case.QUESTION_BANK],
                     format_func=lambda k: question_lookup[k],
                     key=f"qselect_{character}",
@@ -338,16 +455,17 @@ with tab_people:
                 if st.button(f"Ask {character}", key=f"ask_{character}", disabled=not game.can_act()):
                     ok, answer = game.ask_question(character, q_key)
                     if ok:
+                        st.audio(sounds.typewriter_click(), format="audio/wav")
                         st.rerun()
                     else:
                         st.warning(answer)
 
 with tab_accuse:
-    st.warning("Making an accusation immediately ends the investigation, whether you're right or not.")
-    suspect = st.selectbox("Who is the mole?", options=case.CHARACTERS, key="accuse_select")
-    if st.button("🚨 Accuse", type="primary"):
+    st.warning("🚨 Making an accusation ends the investigation immediately.")
+    suspect = st.selectbox("Accusation", options=case.CHARACTERS, key="accuse_select")
+    if st.button("🔨 ACCUSE", type="primary"):
         game.make_accusation(suspect)
         st.rerun()
 
 if game.actions_remaining == 0 and not game.game_over:
-    st.error("You're out of actions! Head to the **Make an Accusation** tab to make your final call.")
+    st.error("⏰ Out of actions! Make your final accusation.")
