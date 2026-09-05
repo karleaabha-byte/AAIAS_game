@@ -1,9 +1,5 @@
 """
-case.py - Enhanced case data with interconnected alibis and specific details.
-
-The alibis now form a timeline that either validates or contradicts each other.
-Innocent characters' stories reinforce each other. Zephyr's story has gaps and
-contradicts with Raven's.
+case.py - Enhanced case data with interconnected alibis and background context.
 """
 
 CHARACTERS = ["Raven", "Zephyr", "Luca", "Marinette", "Adrien"]
@@ -22,97 +18,155 @@ sabotaged, and morale is through the floor. Five staff members were on shift
 last night: **Raven, Zephyr, Luca, Marinette, and Adrien.**
 
 Rumor has it there's a mole among them — someone quietly working against the
-facility from the inside.
+facility from the inside. You have **12 actions** to crack the case (3 extra for
+investigation breadth).
 
-You have **9 actions** to crack the case:
 - Investigate all **3 rooms** (1 visit each)
 - Question all **5 staff members** (1 question each)
 - Make **1 final accusation**
+- That leaves **3 actions** for additional investigation.
 """
+
+# --- BACKGROUND CONTEXT: Facts established independently ---
+BACKGROUND = {
+    "security_log": {
+        "title": "Security Access Log (11:30 PM - 12:30 AM)",
+        "entries": [
+            "11:47 PM — Lab Door: Unlocked by Raven's badge",
+            "11:50 PM — Vent Access Panel (Storage): Opened using maintenance override",
+            "11:52 PM — Vending Machine (Cafeteria): Restocking in progress",
+            "12:03 AM — Vent Access Panel (Storage): Closed",
+            "12:15 AM — Lab Door: Locked by Raven's badge",
+        ]
+    },
+    "timeline": {
+        "title": "Incident Timeline",
+        "notes": [
+            "11:45 PM — Facilities report first equipment malfunction",
+            "11:50 PM — Vending machine restocking noted by corridor patrol",
+            "12:00 AM — Supply cabinet discovered open and partially emptied",
+            "12:10 AM — Vent system alarm triggered (maintenance override detected)",
+        ]
+    },
+    "maintenance": {
+        "title": "Vent Access Authorization",
+        "notes": [
+            "Only 2 staff members have vent access: Supply Coordinator, Maintenance Chief",
+            "Maintenance Chief: Off-shift (not present last night)",
+            "Supply Coordinator: On-shift all night",
+        ]
+    },
+}
 
 PROFILES = {
     "Raven": {
         "job": "Head Chemist",
         "location": "Laboratory",
         "true_alibi": (
-            "I spent the whole night alone in the Laboratory, recalibrating the incubators. "
-            "The door was locked from the inside — nobody could have gotten in."
+            "I was alone in the Laboratory all night, recalibrating the incubators. "
+            "I came in around 11:45, locked the door, and didn't leave until after midnight."
         ),
     },
     "Zephyr": {
         "job": "Supply Coordinator",
         "location": "Storage",
-        "true_alibi": "I was doing a full inventory count in Storage, all by myself.",
-        "false_alibi": "I stepped into the Laboratory around 11:45 PM to borrow a tool from Raven.",
+        "true_alibi": "I was in Storage doing inventory count all night. Didn't leave once.",
+        "false_alibi": "I was mostly in Storage, but I did pop into the Lab briefly to help Raven with something around 11:50.",
     },
     "Luca": {
         "job": "Security Officer",
-        "location": "Cafeteria Corridor",
-        "true_alibi": "I was patrolling the corridor outside the Cafeteria most of the night. I even saw the Supply Coordinator restocking the vending machine around 11:50 PM.",
+        "location": "Corridor Patrol",
+        "true_alibi": "I was patrolling the corridors and monitoring the security feed all night. Nothing unusual on camera until the alarm.",
     },
     "Marinette": {
         "job": "Medic",
         "location": "Medical Bay",
-        "true_alibi": "I was in the medical bay all night, tending to a worker who'd come down with a fever. Didn't leave for a second.",
+        "true_alibi": "I was treating a worker in the medical bay all night. They had a high fever, so I stayed with them the whole time.",
     },
     "Adrien": {
         "job": "Engineer",
         "location": "Generator Room",
-        "true_alibi": "I was down in the generator room, fixing a fuel line that had started leaking. Took me about 3 hours, finished around midnight.",
+        "true_alibi": "I was in the generator room fixing a fuel leak. Started around 11:30, finished around 12:15 AM.",
     },
 }
 
 QUESTION_BANK = [
-    ("alibi", "Where were you last night, and do you have anyone who can corroborate it?"),
-    ("suspicion", "Did you notice anything strange going on?"),
-    ("vending", "Did you see anyone near the vending machine or the restocking log?"),
-    ("access", "Do you have access to the ventilation system?"),
-    ("trust", "Who around here would you trust the least, and why?"),
+    ("alibi", "Walk me through your movements last night between 11:30 PM and 12:30 AM."),
+    ("vent", "Do you have authorization to access the ventilation system?"),
+    ("vending", "Did you go near the vending machine or the supply areas?"),
+    ("observation", "Did you see anyone acting unusually or in places they shouldn't be?"),
+    ("timeline", "When exactly did you arrive and leave your assigned area?"),
 ]
 
 _INNOCENT_ANSWERS = {
     "Raven": {
-        "suspicion": "The vents have been rattling more than usual. And I heard footsteps in the hallway around 11:45.",
-        "vending": "Not really my department, I barely leave the lab.",
-        "access": "Only the Supply Coordinator has full vent access on night shift. It's in the maintenance chart.",
-        "trust": "I'd rather not point fingers without proof.",
+        "alibi": (
+            "I unlocked the lab around 11:45 and spent the whole night there alone, "
+            "working on the incubators. Locked up and left after midnight."
+        ),
+        "vent": "No, I don't have vent access. That's restricted to Supply and Maintenance.",
+        "vending": "Not at all. I was in the lab the entire time.",
+        "observation": "I heard some unusual sounds near the vents around 11:50, but I assumed it was just the system.",
+        "timeline": "Arrived 11:45, left around 12:20. No breaks.",
     },
     "Luca": {
-        "suspicion": "The cafeteria's vending machine has been glitching. Also, I saw the Supply Coordinator restocking it around 11:50.",
-        "vending": "I literally watched Zephyr restocking it late last night. They seemed to be lingering longer than usual.",
-        "access": "The vent hatch is only accessible from the Supply Storage. That's restricted to Zephyr and maintenance.",
-        "trust": "Everyone's got secrets on a night shift like this.",
+        "alibi": (
+            "I was on corridor patrol the entire shift, monitoring the security cameras. "
+            "I saw the restocking happen in the cafeteria around 11:50."
+        ),
+        "vent": "No, I don't have access. Only the Supply Coordinator and Maintenance can touch those.",
+        "vending": "I saw someone restocking the vending machine around 11:50 PM. Looked routine.",
+        "observation": "The supply coordinator seemed to be moving around more than usual, but nothing overtly suspicious.",
+        "timeline": "Patrol from 11:30 until end of shift. Stationary in security office monitoring feeds.",
     },
     "Marinette": {
-        "suspicion": "One of the patients kept muttering about a 'draft' from the vents. Odd timing.",
-        "vending": "I heard it ate someone's snack money, but I wasn't near the cafeteria.",
-        "access": "I have no reason to know who has vent access. That's not my area.",
-        "trust": "I try to think the best of everyone here.",
+        "alibi": (
+            "I was in the medical bay all night treating a worker who came in sick. "
+            "Never left their side."
+        ),
+        "vent": "No, I wouldn't have access to that. That's a Supply Coordinator thing.",
+        "vending": "I wasn't near the vending machine. I was in the medical bay.",
+        "observation": "My patient mentioned hearing something rattling in the vents around midnight, but I didn't investigate.",
+        "timeline": "Medical bay from 11:00 PM onward. The patient arrived around 11:20.",
     },
     "Adrien": {
-        "suspicion": "The generator's been fine, but I did hear something rattling in the vent system around 11:30.",
-        "vending": "It's been eating coins all week. I didn't see anyone near it though.",
-        "access": "Only people with maintenance clearance can touch the vents. That's like... Zephyr and maybe one or two others.",
-        "trust": "Hard to say. Luca probably knows more — he's everywhere at night.",
+        "alibi": (
+            "I was in the generator room fixing a fuel leak. Arrived around 11:30, "
+            "took me about 45 minutes. Left around 12:15."
+        ),
+        "vent": "No, I don't have vent access. That's restricted to Supply and Maintenance.",
+        "vending": "I didn't go near the vending machine.",
+        "observation": "I heard something in the vent system around 11:50 or so. Sounded like movement.",
+        "timeline": "Generator room 11:30 to 12:15 AM. No breaks.",
     },
 }
 
 _ZEPHYR_ANSWERS = {
-    "suspicion": {
-        "truth": "Now that you mention it... I felt a strange draft near the vents last night. Probably nothing.",
-        "lie": "Nope, nothing seemed off to me at all.",
+    "alibi": {
+        "truth": (
+            "I was in Storage doing the nightly inventory. Started around 11:30, "
+            "kept at it the whole time."
+        ),
+        "lie": (
+            "I was in Storage, but I did step into the lab around 11:50 to help Raven "
+            "with something real quick. Only took a few minutes."
+        ),
+    },
+    "vent": {
+        "truth": "Yeah, I have full vent access as Supply Coordinator. Part of the job.",
+        "lie": "No, I don't have vent access. Why would I?",
     },
     "vending": {
-        "truth": "Oh, I actually restocked it myself last night around 11:50 — comes with the job.",
-        "lie": "No idea, I don't really deal with the cafeteria side of things.",
+        "truth": "I restocked the vending machine around 11:50. That's a regular task for me.",
+        "lie": "I wasn't near the vending machine. I was focused on inventory.",
     },
-    "access": {
-        "truth": "Yeah, I have full vent access. Part of the Supply Coordinator role — gotta check air filters.",
-        "lie": "No, I don't have vent access. That's a maintenance thing.",
+    "observation": {
+        "truth": "Nothing unusual that I noticed. Just a normal night.",
+        "lie": "I heard some people moving around, but couldn't tell who.",
     },
-    "trust": {
-        "truth": "Honestly? I don't suspect anyone. We all get along fine.",
-        "lie": "Beats me. Everyone seems trustworthy enough.",
+    "timeline": {
+        "truth": "Storage from 11:30 onward. Left around 12:25.",
+        "lie": "I was in Storage the whole time, didn't leave once.",
     },
 }
 
@@ -189,6 +243,4 @@ def get_answer(character, question_key, tell_truth=True):
         if variants:
             return variants["truth"] if tell_truth else variants["lie"]
         return "..."
-    if question_key == "alibi":
-        return PROFILES[character]["true_alibi"]
-    return _INNOCENT_ANSWERS.get(character, {}).get(question_key, "Not much to say about that.")
+    return _INNOCENT_ANSWERS.get(character, {}).get(question_key, "I don't have much to say about that.")
