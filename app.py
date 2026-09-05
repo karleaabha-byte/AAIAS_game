@@ -1,12 +1,12 @@
-
+"""
 app.py - Streamlit front-end for "Who Is the Mole?" — NOIR EDITION
 
 Run:
     streamlit run app.py
 """
 
-import streamlit as st
 import html
+import streamlit as st
 import case
 
 from game import GameState, TOTAL_BUDGET, ROOMS
@@ -25,7 +25,7 @@ st.set_page_config(
 
 
 # ============================================================
-# NOIR CSS
+# NOIR AESTHETIC
 # ============================================================
 
 st.markdown(
@@ -51,14 +51,15 @@ st.markdown(
         color: #d4af37;
         font-family: monospace;
         font-size: 2.5rem;
-        text-shadow: 0 0 10px rgba(212,175,55,.5);
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
         letter-spacing: 3px;
     }
 
-    h2, h3 {
+    h2,
+    h3 {
         color: #f39c12;
         font-family: monospace;
-        text-shadow: 0 0 8px rgba(243,156,18,.4);
+        text-shadow: 0 0 8px rgba(243, 156, 18, 0.4);
     }
 
     .stTabs [data-baseweb="tab-list"] {
@@ -99,22 +100,24 @@ st.markdown(
         border: 1.5px solid #d4af37;
         font-family: monospace;
         font-weight: bold;
-        box-shadow: 0 0 8px rgba(212,175,55,.3);
+        box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+        transition: all 0.2s ease;
     }
 
     .stButton > button:hover {
         background-color: #d4af37;
         color: #1a0f2e;
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
     }
 
     .case-file {
-        background: rgba(45,31,66,.85);
+        background: rgba(45, 31, 66, 0.85);
         border: 1px solid #5a3d8a;
         border-left: 4px solid #d4af37;
         border-radius: 8px;
         padding: 20px;
         margin: 15px 0;
-        box-shadow: 0 5px 25px rgba(0,0,0,.35);
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.35);
     }
 
     .background-section {
@@ -151,7 +154,7 @@ st.markdown(
         font-family: Georgia, serif;
         padding: 25px;
         border-radius: 2px;
-        box-shadow: 0 4px 20px rgba(0,0,0,.7);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
         transform: rotate(-1deg);
         margin: 14px 4px;
         line-height: 1.9;
@@ -163,15 +166,22 @@ st.markdown(
     }
 
     /* ========================================================
-       STORAGE BOARD
+       STORAGE
        ======================================================== */
 
     .riddle-board {
         background-color: #10151f;
 
         background-image:
-            linear-gradient(#1c2434 1px, transparent 1px),
-            linear-gradient(90deg, #1c2434 1px, transparent 1px);
+            linear-gradient(
+                #1c2434 1px,
+                transparent 1px
+            ),
+            linear-gradient(
+                90deg,
+                #1c2434 1px,
+                transparent 1px
+            );
 
         background-size: 22px 22px;
 
@@ -183,7 +193,7 @@ st.markdown(
         border: 2px solid #334155;
         line-height: 1.8;
         margin: 14px 4px;
-        box-shadow: 0 4px 20px rgba(0,0,0,.7);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
     }
 
     .riddle-line {
@@ -207,15 +217,10 @@ st.markdown(
         font-style: italic;
     }
 
-    .riddle-divider {
-        border-top: 1px dashed #64748b;
-        margin: 20px 0;
-    }
-
     .riddle-question {
         color: #f1f5f9;
         font-style: italic;
-        margin-top: 12px;
+        margin-top: 14px;
     }
 
     /* ========================================================
@@ -230,7 +235,7 @@ st.markdown(
         border: 1px dashed #777;
         max-width: 340px;
         margin: 14px auto;
-        box-shadow: 0 4px 20px rgba(0,0,0,.7);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
     }
 
     .receipt-title {
@@ -297,11 +302,12 @@ st.markdown(
         color: #d4af37;
         font-family: monospace;
         font-weight: bold;
+        font-size: 1rem;
     }
 
     .statement-question {
         color: #9d8ca8;
-        font-size: .85rem;
+        font-size: 0.85rem;
         margin-top: 8px;
     }
 
@@ -346,7 +352,7 @@ st.markdown(
 
     .log-entry {
         font-family: monospace;
-        font-size: .85rem;
+        font-size: 0.85rem;
         color: #c9a961;
         padding: 5px 0;
         border-bottom: 1px dotted #5a3d8a;
@@ -363,12 +369,12 @@ st.markdown(
         border: 1px solid #725b7b;
         color: #d8c9dc;
         background: #201825;
-        font-size: .75rem;
+        font-size: 0.75rem;
         border-radius: 4px;
     }
 
     /* ========================================================
-       VERDICT
+       FINAL REPORT
        ======================================================== */
 
     .verdict-box {
@@ -377,7 +383,7 @@ st.markdown(
         border-radius: 8px;
         padding: 25px;
         text-align: center;
-        box-shadow: 0 0 25px rgba(212,175,55,.2);
+        box-shadow: 0 0 25px rgba(212, 175, 55, 0.2);
     }
 
     </style>
@@ -430,7 +436,10 @@ def get_question_text(question_key):
     questions = getattr(case, "QUESTION_BANK", {})
 
     if isinstance(questions, dict):
-        return questions.get(question_key, question_key)
+        return questions.get(
+            question_key,
+            question_key
+        )
 
     return str(question_key)
 
@@ -445,7 +454,10 @@ def get_statement_data(character):
     if not isinstance(statements, dict):
         return {}
 
-    value = statements.get(character, {})
+    value = statements.get(
+        character,
+        {}
+    )
 
     if isinstance(value, dict):
         return value
@@ -484,9 +496,8 @@ def render_lab_note(lines):
     """
     Render the laboratory note.
 
-    IMPORTANT:
-    We deliberately do NOT highlight the first letters.
-    The player must discover the acrostic themselves.
+    The first letters are NOT highlighted.
+    The player has to discover the acrostic themselves.
     """
 
     html_output = '<div class="note-card">'
@@ -499,7 +510,7 @@ def render_lab_note(lines):
 
         elif isinstance(item, (list, tuple)) and len(item) >= 2:
 
-            # Old format:
+            # Supports old format:
             # ("F", "ilter pressure...")
             text = f"{item[0]}{item[1]}"
 
@@ -518,9 +529,9 @@ def render_lab_note(lines):
             text = str(item)
 
         html_output += (
-            f'<div class="note-line">'
+            '<div class="note-line">'
             f'{safe_html(text)}'
-            f'</div>'
+            '</div>'
         )
 
     html_output += "</div>"
@@ -532,11 +543,11 @@ def render_lab_note(lines):
 
 
 # ============================================================
-# STORAGE BOARD RENDERER
+# STORAGE INVENTORY BOARD
 # ============================================================
 
 def render_storage_board(lines):
-    """Render the scratched inventory board."""
+    """Render the scratched storage inventory board."""
 
     html_output = '<div class="riddle-board">'
 
@@ -568,7 +579,7 @@ def render_storage_board(lines):
         html_output += (
             f'<div class="{" ".join(classes)}">'
             f'{safe_html(text)}'
-            f'</div>'
+            '</div>'
         )
 
     html_output += "</div>"
@@ -580,14 +591,14 @@ def render_storage_board(lines):
 
 
 # ============================================================
-# STORAGE RIDDLE RENDERER
+# STORAGE RIDDLE
 # ============================================================
 
 def render_storage_riddle(riddle):
     """
-    Render the actual storage riddle.
+    Render the Storage riddle.
 
-    The answer is NEVER displayed.
+    The answer is never displayed.
     """
 
     html_output = '<div class="riddle-board">'
@@ -595,12 +606,15 @@ def render_storage_riddle(riddle):
     for index, line in enumerate(riddle):
 
         if index == len(riddle) - 1:
+
             html_output += (
                 '<div class="riddle-question">'
                 f'{safe_html(line)}'
                 '</div>'
             )
+
         else:
+
             html_output += (
                 '<div class="riddle-line">'
                 f'{safe_html(line)}'
@@ -616,7 +630,7 @@ def render_storage_riddle(riddle):
 
 
 # ============================================================
-# CAFETERIA RECEIPT RENDERER
+# CAFETERIA RECEIPT
 # ============================================================
 
 def render_receipt(job, pin_digits, redacted):
@@ -631,8 +645,11 @@ def render_receipt(job, pin_digits, redacted):
     """
 
     if isinstance(pin_digits, (list, tuple)):
+
         digits = list(pin_digits)
+
     else:
+
         digits = list(str(pin_digits))
 
     if isinstance(redacted, str):
@@ -703,7 +720,7 @@ def render_receipt(job, pin_digits, redacted):
 
 
 # ============================================================
-# CLUE RENDERER
+# GENERIC CLUE RENDERER
 # ============================================================
 
 def render_clue(room, clue):
@@ -721,6 +738,7 @@ def render_clue(room, clue):
     if room == "Laboratory":
 
         if clue.get("title"):
+
             st.markdown(
                 f"### {safe_html(clue['title'])}"
             )
@@ -732,10 +750,16 @@ def render_clue(room, clue):
             )
 
         if clue.get("note"):
-            st.info(clue["note"])
+
+            st.info(
+                clue["note"]
+            )
 
         if clue.get("description"):
-            st.write(clue["description"])
+
+            st.write(
+                clue["description"]
+            )
 
     # ========================================================
     # STORAGE
@@ -744,6 +768,7 @@ def render_clue(room, clue):
     elif room == "Storage":
 
         if clue.get("title"):
+
             st.markdown(
                 f"### {safe_html(clue['title'])}"
             )
@@ -767,19 +792,22 @@ def render_clue(room, clue):
             )
 
         if clue.get("note"):
-            st.info(clue["note"])
+
+            st.info(
+                clue["note"]
+            )
 
         if clue.get("description"):
-            st.write(clue["description"])
+
+            st.write(
+                clue["description"]
+            )
 
         # IMPORTANT:
-        # hidden_note is intentionally NOT displayed.
+        # hidden_note is deliberately NOT displayed here.
         #
-        # This prevents the game from saying:
-        # "The missing digit is the number of letters..."
-        #
-        # The player should discover the Storage answer
-        # first and then use it at the Cafeteria.
+        # Otherwise the Storage clue would literally tell
+        # the player how to use the answer.
 
     # ========================================================
     # CAFETERIA
@@ -788,6 +816,7 @@ def render_clue(room, clue):
     elif room == "Cafeteria":
 
         if clue.get("title"):
+
             st.markdown(
                 f"### {safe_html(clue['title'])}"
             )
@@ -808,16 +837,24 @@ def render_clue(room, clue):
             )
 
         if clue.get("note"):
-            st.info(clue["note"])
 
-        # This is deliberately shown only here.
+            st.info(
+                clue["note"]
+            )
+
+        # The connection between the Storage answer
+        # and the missing PIN digit is revealed here.
         if clue.get("hidden_note"):
+
             st.caption(
                 clue["hidden_note"]
             )
 
         if clue.get("description"):
-            st.write(clue["description"])
+
+            st.write(
+                clue["description"]
+            )
 
 
 # ============================================================
@@ -847,6 +884,7 @@ def reset_case():
     for key in keys_to_remove:
 
         if key in st.session_state:
+
             del st.session_state[key]
 
 
@@ -888,13 +926,16 @@ with st.sidebar:
     st.session_state.researcher_name = new_name
 
     if new_name:
+
         st.write(
             f"**Detective:** {new_name}"
         )
 
     st.divider()
 
-    st.subheader("Actions Remaining")
+    st.subheader(
+        "Actions Remaining"
+    )
 
     st.metric(
         "",
@@ -921,7 +962,9 @@ with st.sidebar:
 
     st.divider()
 
-    st.subheader("Investigation")
+    st.subheader(
+        "Investigation"
+    )
 
     st.write(
         f"🏚️ Scenes searched: "
@@ -946,16 +989,20 @@ with st.sidebar:
 
     st.divider()
 
-    with st.expander("📋 CASE LOG"):
+    with st.expander(
+        "📋 CASE LOG"
+    ):
 
         if game.log:
 
-            for entry in reversed(game.log[-10:]):
+            for entry in reversed(
+                game.log[-10:]
+            ):
 
                 st.markdown(
-                    f'<div class="log-entry">'
+                    '<div class="log-entry">'
                     f'• {safe_html(entry)}'
-                    f'</div>',
+                    '</div>',
                     unsafe_allow_html=True
                 )
 
@@ -991,7 +1038,9 @@ case_intro = getattr(
     "A mysterious incident has occurred."
 )
 
-st.markdown(case_intro)
+st.markdown(
+    case_intro
+)
 
 st.markdown(
     "</div>",
@@ -1000,7 +1049,7 @@ st.markdown(
 
 
 # ============================================================
-# END GAME
+# END OF GAME
 # ============================================================
 
 if game.game_over:
@@ -1106,9 +1155,9 @@ if game.game_over:
         ):
 
             st.markdown(
-                f'<span class="clue-chip">'
+                '<span class="clue-chip">'
                 f'✓ {safe_html(evidence)}'
-                f'</span>',
+                '</span>',
                 unsafe_allow_html=True
             )
 
@@ -1180,7 +1229,7 @@ if game.game_over:
 
 
 # ============================================================
-# BACKGROUND
+# BACKGROUND TAB
 # ============================================================
 
 with tab_background:
@@ -1211,9 +1260,9 @@ with tab_background:
             )
 
             st.markdown(
-                f'<div class="background-title">'
+                '<div class="background-title">'
                 f'{safe_html(section)}'
-                f'</div>',
+                '</div>',
                 unsafe_allow_html=True
             )
 
@@ -1262,7 +1311,9 @@ with tab_background:
 
             else:
 
-                st.write(section_data)
+                st.write(
+                    section_data
+                )
 
             st.markdown(
                 "</div>",
@@ -1271,7 +1322,9 @@ with tab_background:
 
     else:
 
-        st.write(background)
+        st.write(
+            background
+        )
 
 
 # ============================================================
@@ -1303,6 +1356,7 @@ with tab_evidence:
     )
 
     clue_names = {
+
         "lab_acrostic":
             "🧪 Laboratory note",
 
@@ -1359,7 +1413,9 @@ with tab_evidence:
 
         any_statements = True
 
-        profile = get_profile(character)
+        profile = get_profile(
+            character
+        )
 
         role = profile.get(
             "role",
@@ -1372,7 +1428,10 @@ with tab_evidence:
 
             for question_key, statement in statements.items():
 
-                if not isinstance(statement, dict):
+                if not isinstance(
+                    statement,
+                    dict
+                ):
                     continue
 
                 answer = statement.get(
@@ -1382,13 +1441,13 @@ with tab_evidence:
 
                 st.markdown(
                     '<div class="statement-card">'
-                    f'<div class="statement-character">'
+                    '<div class="statement-character">'
                     f'{safe_html(character)}'
                     '</div>'
-                    f'<div class="statement-question">'
+                    '<div class="statement-question">'
                     f'Q: {safe_html(get_question_text(question_key))}'
                     '</div>'
-                    f'<div class="statement-answer">'
+                    '<div class="statement-answer">'
                     f'“{safe_html(answer)}”'
                     '</div>'
                     '</div>',
@@ -1519,7 +1578,7 @@ with tab_rooms:
             )
 
             # =================================================
-            # ALREADY INVESTIGATED
+            # INVESTIGATED
             # =================================================
 
             if room in game.visited_rooms:
@@ -1535,9 +1594,9 @@ with tab_rooms:
                     clue
                 )
 
-                # ------------------------------------------------
+                # =================================================
                 # CAFETERIA PIN
-                # ------------------------------------------------
+                # =================================================
 
                 if room == "Cafeteria":
 
@@ -1578,11 +1637,13 @@ with tab_rooms:
 
                             else:
 
-                                correct = game.attempt_pin(
-                                    pin_guess
+                                pin_correct = (
+                                    game.attempt_pin(
+                                        pin_guess
+                                    )
                                 )
 
-                                if correct:
+                                if pin_correct:
 
                                     st.success(
                                         "🔓 PIN CRACKED"
@@ -1660,7 +1721,7 @@ with tab_people:
                 '<div class="suspect-card">'
                 f'<strong>{safe_html(character)}</strong>'
                 '<br>'
-                f'<span style="color:#c9a961;font-size:.8rem;">'
+                '<span style="color:#c9a961;font-size:.8rem;">'
                 f'{safe_html(profile.get("role", "Unknown role"))}'
                 ' • '
                 f'{safe_html(profile.get("location", "Unknown"))}'
@@ -1813,6 +1874,7 @@ with tab_accuse:
             "🥤 Cafeteria restocking receipt",
     }
 
+    # Physical clues
     for clue in getattr(
         game.evidence,
         "clues_found",
@@ -1826,8 +1888,11 @@ with tab_accuse:
 
         if label not in evidence_options:
 
-            evidence_options.append(label)
+            evidence_options.append(
+                label
+            )
 
+    # Statements
     for character in case.CHARACTERS:
 
         statements = get_statement_data(
@@ -1843,7 +1908,9 @@ with tab_accuse:
 
             if label not in evidence_options:
 
-                evidence_options.append(label)
+                evidence_options.append(
+                    label
+                )
 
     if evidence_options:
 
@@ -1941,4 +2008,3 @@ if (
         "The facility is running out of time. "
         "Make your final accusation."
     )
-
