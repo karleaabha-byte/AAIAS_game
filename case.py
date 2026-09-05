@@ -308,6 +308,28 @@ STORAGE_CLUE = {
 
 
 # ============================================================
+# SABOTAGED STORAGE CLUE
+# ============================================================
+
+STORAGE_SABOTAGED_RIDDLE = {
+    "title": "THE STORAGE RIDDLE — CORRUPTED",
+
+    "riddle": [
+        "I move without feet and speak without a voice.",
+        "I can be felt but never held.",
+        "I may pass through a room without opening its door.",
+        "I can be gentle enough to cool you,",
+        "or violent enough to tear through a forest.",
+        "What am I?"
+    ],
+
+    "note": (
+        "Some of the original storage terminal data "
+        "appears to have been corrupted."
+    )
+}
+
+# ============================================================
 # CAFETERIA CLUE
 # ============================================================
 
