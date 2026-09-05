@@ -7,6 +7,7 @@ Run with:
 
 import streamlit as st
 import io
+import base64
 
 import case
 import optimal_path
@@ -38,7 +39,8 @@ def generate_beep(
     t = np.linspace(
         0,
         duration,
-        int(sample_rate * duration)
+        int(sample_rate * duration),
+        endpoint=False
     )
 
     wave = (
@@ -81,13 +83,17 @@ def success_chime():
     t = np.linspace(
         0,
         duration,
-        int(sample_rate * duration)
+        int(sample_rate * duration),
+        endpoint=False
     )
 
     freq_progression = np.concatenate([
         np.full(len(t) // 3, 262),
         np.full(len(t) // 3, 330),
-        np.full(len(t) // 3, 392),
+        np.full(
+            len(t) - 2 * (len(t) // 3),
+            392
+        ),
     ])
 
     wave = (
@@ -115,6 +121,41 @@ def success_chime():
     buffer.seek(0)
 
     return buffer
+
+
+# ============================================================
+# AUTOPLAY AUDIO
+# ============================================================
+
+def autoplay_audio(audio_buffer):
+    """
+    Play audio automatically without displaying
+    Streamlit's audio player or play button.
+    """
+
+    if audio_buffer is None:
+        return
+
+    audio_buffer.seek(0)
+
+    audio_bytes = audio_buffer.read()
+
+    audio_base64 = (
+        base64.b64encode(audio_bytes)
+        .decode("utf-8")
+    )
+
+    st.markdown(
+        f"""
+        <audio autoplay>
+            <source
+                src="data:audio/wav;base64,{audio_base64}"
+                type="audio/wav"
+            >
+        </audio>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 # ============================================================
@@ -214,14 +255,10 @@ st.markdown(
         background-color: #3d2860;
 
         border-radius:
-            8px
-            8px
-            0
-            0;
+            8px 8px 0 0;
 
         padding:
-            10px
-            18px;
+            10px 18px;
 
         color: #c9a961;
 
@@ -273,9 +310,11 @@ st.markdown(
 
     div[data-testid="stMetricValue"] {
 
-        color: #f39c12;
+        color:
+            #f39c12;
 
-        font-size: 1.8rem;
+        font-size:
+            1.8rem;
 
         font-family:
             'JetBrains Mono',
@@ -349,10 +388,7 @@ st.markdown(
             cursive;
 
         padding:
-            22px
-            24px
-            16px
-            24px;
+            22px 24px 16px 24px;
 
         border-radius:
             2px;
@@ -368,8 +404,7 @@ st.markdown(
             relative;
 
         margin:
-            14px
-            4px;
+            14px 4px;
 
         line-height:
             1.7;
@@ -440,8 +475,7 @@ st.markdown(
             );
 
         background-size:
-            22px
-            22px;
+            22px 22px;
 
         color:
             #e5e7eb;
@@ -467,8 +501,7 @@ st.markdown(
             1.9;
 
         margin:
-            14px
-            4px;
+            14px 4px;
 
         box-shadow:
             0 4px 20px
@@ -535,8 +568,7 @@ st.markdown(
             monospace;
 
         padding:
-            16px
-            20px;
+            16px 20px;
 
         border:
             1px dashed
@@ -546,8 +578,7 @@ st.markdown(
             320px;
 
         margin:
-            14px
-            auto;
+            14px auto;
 
         box-shadow:
             0 4px 20px
@@ -685,9 +716,7 @@ st.markdown(
             );
 
         transition:
-            width
-            0.3s
-            ease;
+            width 0.3s ease;
     }
 
 
@@ -743,29 +772,20 @@ st.markdown(
 
         animation:
             typewrite
-            0.2s
-            ease-in;
+            0.2s ease-in;
     }
 
 
     @keyframes typewrite {
 
         from {
-
-            opacity:
-                0;
-
-            transform:
-                translateX(-10px);
+            opacity: 0;
+            transform: translateX(-10px);
         }
 
         to {
-
-            opacity:
-                1;
-
-            transform:
-                translateX(0);
+            opacity: 1;
+            transform: translateX(0);
         }
     }
 
@@ -832,7 +852,7 @@ st.markdown(
         rel="stylesheet"
     >
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 
@@ -944,12 +964,6 @@ def render_receipt(
 # ============================================================
 
 def render_evidence_board(game):
-    """
-    Render the detective board with:
-    - suspect guilt scores
-    - contradiction alerts
-    - dynamic suspicion bars
-    """
 
     html = """
     <div class="evidence-grid">
@@ -961,6 +975,7 @@ def render_evidence_board(game):
             EVIDENCE BOARD
         </h3>
     """
+
 
     # --------------------------------------------------------
     # CONTRADICTIONS
@@ -978,6 +993,7 @@ def render_evidence_board(game):
             </div>
             """
 
+
     # --------------------------------------------------------
     # SUSPECT CARDS
     # --------------------------------------------------------
@@ -986,15 +1002,14 @@ def render_evidence_board(game):
         <div style="margin-top: 16px;">
     """
 
+
     for character in case.CHARACTERS:
 
-        # Get current suspicion score
         guilt = (
             game.evidence
             .get_guilt_score(character)
         )
 
-        # Make sure score stays between 0 and 100
         guilt = max(
             0,
             min(
@@ -1014,6 +1029,7 @@ def render_evidence_board(game):
             "location",
             "Unknown"
         )
+
 
         html += f"""
         <div class="suspect-card">
@@ -1052,6 +1068,7 @@ def render_evidence_board(game):
 
         </div>
         """
+
 
     html += """
         </div>
@@ -1143,8 +1160,7 @@ with st.sidebar:
     )
 
     st.progress(
-        game.actions_used
-        / TOTAL_BUDGET
+        game.actions_used / TOTAL_BUDGET
     )
 
 
@@ -1160,13 +1176,9 @@ with st.sidebar:
         f"{game.suspicion}/100"
     )
 
-    col_sus = st.columns([1])
-
-    with col_sus[0]:
-
-        st.progress(
-            game.suspicion / 100
-        )
+    st.progress(
+        game.suspicion / 100
+    )
 
 
     # --------------------------------------------------------
@@ -1230,7 +1242,9 @@ with st.sidebar:
 
             log_html = (
                 '<div class="log-entry">'
-                + "<br>".join(game.log[-10:])
+                + "<br>".join(
+                    game.log[-10:]
+                )
                 + "</div>"
             )
 
@@ -1271,14 +1285,9 @@ if game.game_over:
             f"{game.accused} is the mole."
         )
 
-        audio = success_chime()
-
-        if audio:
-
-            st.audio(
-                audio,
-                format="audio/wav"
-            )
+        autoplay_audio(
+            success_chime()
+        )
 
     else:
 
@@ -1419,7 +1428,9 @@ with tab_background:
 
             if "entries" in section_data:
 
-                for entry in section_data["entries"]:
+                for entry in (
+                    section_data["entries"]
+                ):
 
                     st.write(
                         f"• {entry}"
@@ -1428,7 +1439,9 @@ with tab_background:
 
             if "notes" in section_data:
 
-                for note in section_data["notes"]:
+                for note in (
+                    section_data["notes"]
+                ):
 
                     st.write(
                         f"• {note}"
@@ -1447,8 +1460,8 @@ with tab_evidence:
 
 
     # IMPORTANT:
-    # Use st.html() instead of st.markdown()
-    # so the HTML is rendered directly.
+    # st.html() renders the HTML directly.
+    # This prevents the raw <div> problem.
 
     st.html(
         render_evidence_board(game)
@@ -1456,7 +1469,7 @@ with tab_evidence:
 
 
     # --------------------------------------------------------
-    # CONTRADICTIONS
+    # FLAGGED CONTRADICTIONS
     # --------------------------------------------------------
 
     if game.evidence.contradictions:
@@ -1509,7 +1522,7 @@ with tab_rooms:
 
 
             # ------------------------------------------------
-            # ALREADY VISITED
+            # ROOM ALREADY VISITED
             # ------------------------------------------------
 
             if room in game.visited_rooms:
@@ -1579,16 +1592,9 @@ with tab_rooms:
                                 "Supply Coordinator confirmed."
                             )
 
-
-                            audio = success_chime()
-
-
-                            if audio:
-
-                                st.audio(
-                                    audio,
-                                    format="audio/wav"
-                                )
+                            autoplay_audio(
+                                success_chime()
+                            )
 
                         else:
 
@@ -1599,7 +1605,7 @@ with tab_rooms:
 
 
             # ------------------------------------------------
-            # NOT VISITED
+            # ROOM NOT VISITED
             # ------------------------------------------------
 
             else:
@@ -1617,20 +1623,14 @@ with tab_rooms:
 
                     if ok:
 
-                        audio = (
+                        # Play automatically.
+                        autoplay_audio(
                             typewriter_click()
                         )
 
-
-                        if audio:
-
-                            st.audio(
-                                audio,
-                                format="audio/wav"
-                            )
-
-
-                        st.rerun()
+                        # DO NOT call st.rerun() here.
+                        # Streamlit already reruns after
+                        # the button interaction.
 
 
                     else:
@@ -1722,20 +1722,12 @@ with tab_people:
 
                     if ok:
 
-                        audio = (
+                        # Automatic interrogation sound.
+                        autoplay_audio(
                             typewriter_click()
                         )
 
-
-                        if audio:
-
-                            st.audio(
-                                audio,
-                                format="audio/wav"
-                            )
-
-
-                        st.rerun()
+                        # No explicit rerun here.
 
 
                     else:
@@ -1773,7 +1765,7 @@ with tab_accuse:
             suspect
         )
 
-        st.rerun()
+        # Let the normal Streamlit rerun happen.
 
 
 # ============================================================
