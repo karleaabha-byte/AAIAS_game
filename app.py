@@ -289,8 +289,6 @@ if "hints_used" not in st.session_state:
     st.session_state.hints_used = 0
 if "researcher_name" not in st.session_state:
     st.session_state.researcher_name = ""
-if "play_sound" not in st.session_state:
-    st.session_state.play_sound = False
 
 game = st.session_state.game
 name = st.session_state.researcher_name
@@ -345,7 +343,9 @@ if game.game_over:
     st.divider()
     if game.result == "win":
         st.success(f"✅ CASE CLOSED: {game.accused} is the mole.")
-        st.audio(sounds.success_chime(), format="audio/wav")
+        audio = sounds.success_chime()
+        if audio:
+            st.audio(audio, format="audio/wav")
     else:
         st.error(f"❌ CASE FAILED: {game.accused} was accused, but the true mole was {case.MOLE}.")
 
@@ -423,14 +423,18 @@ with tab_rooms:
                     if st.button("Verify PIN", key="check_pin"):
                         if game.attempt_pin(guess):
                             st.success("🔓 Correct PIN! Supply Coordinator confirmed.")
-                            st.audio(sounds.success_chime(), format="audio/wav")
+                            audio = sounds.success_chime()
+                            if audio:
+                                st.audio(audio, format="audio/wav")
                         else:
                             st.warning("Incorrect PIN. Double-check your digits.")
             else:
                 if st.button(f"Investigate {room}", key=f"visit_{room}", disabled=not game.can_act()):
                     ok, clue = game.visit_room(room)
                     if ok:
-                        st.audio(sounds.typewriter_click(), format="audio/wav")
+                        audio = sounds.typewriter_click()
+                        if audio:
+                            st.audio(audio, format="audio/wav")
                         st.rerun()
                     else:
                         st.warning(clue)
@@ -455,7 +459,9 @@ with tab_people:
                 if st.button(f"Ask {character}", key=f"ask_{character}", disabled=not game.can_act()):
                     ok, answer = game.ask_question(character, q_key)
                     if ok:
-                        st.audio(sounds.typewriter_click(), format="audio/wav")
+                        audio = sounds.typewriter_click()
+                        if audio:
+                            st.audio(audio, format="audio/wav")
                         st.rerun()
                     else:
                         st.warning(answer)
