@@ -1,11 +1,12 @@
 """
-ai_agent.py - Adversarial Mole AI
+ai_agent.py
+Adversarial Mole AI for Zom-Mole Hunter.
 
-Zephyr can:
-1. Lie or tell the truth during interrogation.
-2. Sabotage Storage/Cafeteria investigations.
-3. Make the Storage riddle harder.
-4. Add an optional timed security challenge before interrogation.
+Every major Zephyr decision is exactly 50/50.
+
+IMPORTANT:
+The AI decision is only made when GameState explicitly asks for it.
+Streamlit reruns do NOT cause another decision.
 """
 
 import random
@@ -14,7 +15,6 @@ import random
 class MoleAI:
 
     def __init__(self, seed=None):
-
         self.rng = random.Random(seed)
 
         self.sabotage_count = 0
@@ -23,189 +23,127 @@ class MoleAI:
         self.lie_count = 0
         self.truth_count = 0
 
-        self.riddle_sabotage_count = 0
-        self.challenge_sabotage_count = 0
+        self.security_sabotage_count = 0
+        self.security_skip_count = 0
 
         self.decisions_log = []
 
-    # ============================================================
-    # INTERROGATION
-    # ============================================================
+    # ========================================================
+    # TRUTH / LIE
+    # ========================================================
 
-    def decide_truth_or_lie(self, suspicion):
+    def decide_truth_or_lie(self, suspicion=None):
         """
-        Zephyr becomes more cautious as suspicion increases.
+        EXACTLY 50/50.
 
-        Low suspicion:
-            More likely to lie.
-
-        High suspicion:
-            More likely to tell the truth.
+        Returns:
+            True  -> tell truth
+            False -> lie
         """
 
-        lie_probability = max(
-            0.15,
-            0.75 - suspicion / 100
-        )
+        tell_truth = self.rng.random() < 0.5
 
-        will_lie = self.rng.random() < lie_probability
-
-        if will_lie:
-            self.lie_count += 1
-        else:
+        if tell_truth:
             self.truth_count += 1
+        else:
+            self.lie_count += 1
 
         self.decisions_log.append(
-            f"Mole chose to "
-            f"{'LIE' if will_lie else 'TELL THE TRUTH'} "
-            f"(suspicion={suspicion})."
+            f"Zephyr chose to "
+            f"{'TELL THE TRUTH' if tell_truth else 'LIE'}."
         )
 
-        return not will_lie
+        return tell_truth
 
-    # ============================================================
+    # ========================================================
     # ROOM SABOTAGE
-    # ============================================================
+    # ========================================================
 
-    def decide_room_action(self, suspicion, actions_remaining):
+    def decide_room_action(
+        self,
+        suspicion=None,
+        actions_remaining=None
+    ):
         """
-        Decide whether Zephyr sabotages a room investigation.
+        EXACTLY 50/50.
 
         Returns:
             'sabotage'
             'help'
         """
 
-        caution = suspicion / 100
+        will_sabotage = self.rng.random() < 0.5
 
-        urgency = (
-            0.0
-            if actions_remaining > 4
-            else (5 - actions_remaining) * 0.1
-        )
-
-        sabotage_probability = max(
-            0.10,
-            min(
-                0.90,
-                0.65 - caution + urgency
-            )
-        )
-
-        will_sabotage = (
-            self.rng.random() < sabotage_probability
-        )
-
-        decision = (
-            "sabotage"
-            if will_sabotage
-            else "help"
-        )
-
-        if decision == "sabotage":
+        if will_sabotage:
             self.sabotage_count += 1
+            decision = "sabotage"
         else:
             self.help_count += 1
+            decision = "help"
 
         self.decisions_log.append(
-            f"Mole chose to {decision.upper()} "
-            f"(suspicion={suspicion}, "
-            f"actions_remaining={actions_remaining})."
+            f"Zephyr chose to {decision.upper()} the room clue."
         )
 
         return decision
 
-    # ============================================================
-    # RIDDLE SABOTAGE
-    # ============================================================
+    # ========================================================
+    # SECURITY CHALLENGE
+    # ========================================================
 
-    def decide_riddle_sabotage(self, suspicion):
-        """
-        Zephyr may interfere with the Storage riddle.
-
-        Higher suspicion means Zephyr is more likely
-        to sabotage the puzzle.
-        """
-
-        probability = min(
-            0.80,
-            0.30 + suspicion / 200
-        )
-
-        sabotaged = self.rng.random() < probability
-
-        if sabotaged:
-            self.riddle_sabotage_count += 1
-
-        self.decisions_log.append(
-            f"Riddle sabotage: "
-            f"{'YES' if sabotaged else 'NO'} "
-            f"(suspicion={suspicion})."
-        )
-
-        return sabotaged
-
-    # ============================================================
-    # TIMED SECURITY CHALLENGE
-    # ============================================================
-
-    def decide_extra_challenge(
+    def decide_security_sabotage(
         self,
-        suspicion,
-        actions_remaining
+        suspicion=None,
+        actions_remaining=None
     ):
         """
-        Zephyr decides whether to activate an additional
-        security challenge before interrogation.
+        EXACTLY 50/50.
 
-        The challenge is more likely when:
-        - suspicion is high
-        - Zephyr has fewer actions remaining to protect himself
+        Returns:
+            True  -> deploy timed security challenge
+            False -> keep interrogation system normally accessible
         """
 
-        pressure = suspicion / 100
+        deploy = self.rng.random() < 0.5
 
-        urgency = (
-            0.0
-            if actions_remaining > 5
-            else 0.15
-        )
-
-        probability = min(
-            0.75,
-            0.20 + pressure * 0.50 + urgency
-        )
-
-        activate = self.rng.random() < probability
-
-        if activate:
-            self.challenge_sabotage_count += 1
+        if deploy:
+            self.security_sabotage_count += 1
+        else:
+            self.security_skip_count += 1
 
         self.decisions_log.append(
-            f"Security challenge: "
-            f"{'ACTIVATED' if activate else 'NOT ACTIVATED'} "
-            f"(suspicion={suspicion}, "
-            f"actions_remaining={actions_remaining})."
+            f"Zephyr chose to "
+            f"{'DEPLOY' if deploy else 'SKIP'} "
+            f"the security challenge."
         )
 
-        return activate
+        return deploy
 
-    # ============================================================
-    # STATS
-    # ============================================================
+    # ========================================================
+    # DEBUG / STATS
+    # ========================================================
 
     def stats(self):
 
         return {
-            "sabotage_count": self.sabotage_count,
-            "help_count": self.help_count,
+            "sabotage_count":
+                self.sabotage_count,
 
-            "lie_count": self.lie_count,
-            "truth_count": self.truth_count,
+            "help_count":
+                self.help_count,
 
-            "riddle_sabotage_count":
-                self.riddle_sabotage_count,
+            "lie_count":
+                self.lie_count,
 
-            "challenge_sabotage_count":
-                self.challenge_sabotage_count,
+            "truth_count":
+                self.truth_count,
+
+            "security_sabotage_count":
+                self.security_sabotage_count,
+
+            "security_skip_count":
+                self.security_skip_count,
+
+            "decisions_log":
+                list(self.decisions_log)
         }
