@@ -692,38 +692,6 @@ LAB_CLUE = {
 # ------------------------------------------------------------
 
 STORAGE_CLUE = {
-    "title": "THE SCRATCHED INVENTORY BOARD",
-
-    "lines": [
-        {
-            "text": "Boxes counted: 18",
-            "struck": False
-        },
-        {
-            "text": "Filter cartridges: 24",
-            "struck": True
-        },
-        {
-            "text": "Filter cartridges: 18",
-            "struck": False
-        },
-        {
-            "text": "Ventilation override — 11:50 PM",
-            "struck": False
-        },
-        {
-            "text": "Maintenance Chief — OFF SHIFT",
-            "struck": False
-        },
-        {
-            "text": "Supply Coordinator — ON SHIFT",
-            "struck": False
-        },
-        {
-            "text": "Someone scratched out the original count.",
-            "helper": True
-        }
-    ],
 
     "riddle": [
         "I cannot be seen, but I shake every leaf.",
@@ -745,7 +713,7 @@ CAFETERIA_CLUE = {
     "job": "SUPPLY RESTOCK",
 
     "pin_digits": [
-        "4",
+        "?",
         "?",
         "1",
         "9"
@@ -761,12 +729,8 @@ CAFETERIA_CLUE = {
     "note": (
         "Restocking began at 11:50 PM — exactly when the "
         "corridor cameras went dark."
-    ),
-
-    "hidden_note": (
-        "The missing digit is the number of letters in the "
-        "Storage clue's answer."
     )
+    
 }
 
 
