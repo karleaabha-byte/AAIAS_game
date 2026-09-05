@@ -1,6 +1,6 @@
 """
 case.py
-Case data for "Who Is The Mole?"
+Case data for Zom-Mole Hunter
 """
 
 # ============================================================
@@ -27,7 +27,6 @@ LAB_NUMBER = 4
 STORAGE_ANSWER = "BREEZE"
 STORAGE_NUMBER = len(STORAGE_ANSWER)
 
-# Final PIN = 4619
 CORRECT_PIN = f"{LAB_NUMBER}{STORAGE_NUMBER}19"
 
 
@@ -42,31 +41,21 @@ CASE_INTRO = """
 
 The research facility should have been asleep.
 
-Instead, the emergency lights are flashing, the laboratory alarm is screaming,
-and someone has managed to make an entire cabinet of experimental materials
-disappear without setting off a single ordinary security alarm.
+Instead, the emergency lights are flashing, a laboratory alarm is
+screaming through the corridors, and six experimental filter
+cartridges have disappeared from Storage.
 
-At first, it looked like an equipment failure.
+A centrifuge stopped unexpectedly.
 
-Then security found the broken vial.
+A vial was found broken.
 
-Then they found the ventilation panel.
+And three minutes of corridor camera footage are missing.
 
-Then someone noticed that three minutes of camera footage had vanished.
+Five employees were still inside the facility.
 
-And finally, they discovered something much worse:
+Someone is lying.
 
-**someone inside the facility knew exactly where the blind spots were.**
-
-Five people were still inside the building that night.
-
-One of them is lying.
-
-Possibly more than one.
-
-Your job is not simply to find someone who lied.
-
-Your job is to figure out **which lie matters.**
+Your job is to find out **whose lie matters.**
 """
 
 
@@ -75,88 +64,43 @@ Your job is to figure out **which lie matters.**
 # ============================================================
 
 BACKGROUND = {
-    "THE INCIDENT": {
+
+    "THE CASE": {
         "entries": [
             (
-                "00:10",
-                "The emergency alarm screamed through the facility. "
-                "A centrifuge in the Laboratory had stopped mid-cycle."
+                "12:10 AM",
+                "The emergency alarm sounded after the Laboratory "
+                "centrifuge stopped unexpectedly."
             ),
             (
-                "00:12",
-                "Security found Raven inside the Laboratory. "
-                "A shattered glass vial was lying beside her workstation."
+                "12:14 AM",
+                "Six filter cartridges were found missing from Storage."
             ),
             (
-                "00:14",
-                "Six experimental filter cartridges were missing "
-                "from the Storage inventory."
-            ),
-            (
-                "00:17",
-                "The Storage ventilation panel was discovered closed, "
-                "despite the system reporting that it had been opened earlier."
-            ),
-            (
-                "00:18",
+                "12:18 AM",
                 "Three minutes of corridor camera footage were missing."
-            ),
+            )
         ]
     },
 
-    "THE STRANGE PART": {
+    "THE TIMELINE": {
         "entries": [
             (
-                "11:45",
-                "Raven says she began working alone in the Laboratory."
+                "11:49 PM",
+                "Corridor cameras went offline."
             ),
             (
-                "11:49",
-                "The corridor camera stopped recording."
+                "11:50 PM",
+                "The Storage ventilation system was overridden."
             ),
             (
-                "11:50",
-                "The Storage ventilation panel registered a "
-                "maintenance override."
+                "11:50 PM",
+                "The cafeteria vending machine began an unscheduled restock."
             ),
             (
-                "11:50",
-                "The cafeteria vending machine began an unscheduled "
-                "restocking cycle."
-            ),
-            (
-                "11:52",
-                "The laboratory centrifuge registered an unexpected "
-                "manual interruption."
-            ),
-            (
-                "12:03",
-                "The ventilation panel was closed again."
-            ),
-        ]
-    },
-
-    "WHO COULD OPEN THE VENT?": {
-        "entries": [
-            (
-                "AUTHORIZED",
-                "Only the Supply Coordinator and Maintenance Chief "
-                "are authorized to use the Storage ventilation override."
-            ),
-            (
-                "MAINTENANCE",
-                "The Maintenance Chief was off-site that night."
-            ),
-            (
-                "SUPPLY",
-                "The Supply Coordinator was scheduled for the entire "
-                "night shift."
-            ),
-            (
-                "IMPORTANT",
-                "The system does not identify which authorized employee "
-                "actually used the override."
-            ),
+                "11:52 PM",
+                "The Laboratory centrifuge was manually interrupted."
+            )
         ]
     },
 
@@ -164,58 +108,38 @@ BACKGROUND = {
         "entries": [
             (
                 "RAVEN",
-                "Head Chemist. She was responsible for the Laboratory "
-                "and was apparently the last person seen near the broken vial."
+                "Head Chemist — responsible for the Laboratory."
             ),
             (
                 "ZEPHYR",
-                "Supply Coordinator. Responsible for Storage inventory, "
-                "deliveries and equipment supplies."
+                "Supply Coordinator — responsible for Storage and supplies."
             ),
             (
                 "LUCA",
-                "Security Officer. Responsible for corridor patrols "
-                "and camera monitoring."
+                "Security Officer — responsible for cameras and patrols."
             ),
             (
                 "MARINETTE",
-                "Medic. Responsible for the Medical Bay and night-shift "
-                "first aid."
+                "Medic — responsible for the Medical Bay."
             ),
             (
                 "ADRIEN",
-                "Engineer. Responsible for the Generator Room "
-                "and facility power systems."
-            ),
+                "Engineer — responsible for facility power systems."
+            )
         ]
     },
 
-    "THINGS WORTH REMEMBERING": {
+    "ONE IMPORTANT DETAIL": {
         "entries": [
             (
-                "1",
-                "The camera outage happened at almost exactly the same "
-                "time as the ventilation override."
+                "VENT",
+                "The Storage ventilation override can only be used "
+                "by Supply or Maintenance."
             ),
             (
-                "2",
-                "The person who used the ventilation override did not "
-                "need to physically enter the Laboratory."
-            ),
-            (
-                "3",
-                "The missing cartridges came from Storage."
-            ),
-            (
-                "4",
-                "The vending machine restocking happened during the "
-                "three-minute camera blackout."
-            ),
-            (
-                "5",
-                "Not every suspicious statement is necessarily evidence "
-                "of sabotage."
-            ),
+                "MAINTENANCE",
+                "The Maintenance Chief was off-site that night."
+            )
         ]
     }
 }
@@ -226,6 +150,7 @@ BACKGROUND = {
 # ============================================================
 
 PROFILES = {
+
     "Raven": {
         "role": "Head Chemist",
         "location": "Laboratory",
@@ -250,10 +175,10 @@ PROFILES = {
         "role": "Security Officer",
         "location": "Corridor Patrol",
         "description": (
-            "Takes security seriously, but seems embarrassed "
-            "that three minutes of camera footage disappeared."
+            "Takes security seriously, but is clearly embarrassed "
+            "that the camera outage happened on his watch."
         ),
-        "personality": "Professional with something to hide."
+        "personality": "Professional and guarded."
     },
 
     "Marinette": {
@@ -263,15 +188,15 @@ PROFILES = {
             "Friendly and observant. She notices more than "
             "she initially admits."
         ),
-        "personality": "Kind but secretive."
+        "personality": "Kind but cautious."
     },
 
     "Adrien": {
         "role": "Engineer",
         "location": "Generator Room",
         "description": (
-            "Usually relaxed, but became unusually nervous "
-            "when the power briefly dipped."
+            "Usually relaxed, but was dealing with a brief "
+            "power fluctuation that night."
         ),
         "personality": "Casual and slightly nervous."
     }
@@ -279,25 +204,11 @@ PROFILES = {
 
 
 # ============================================================
-# QUESTIONS
+# ONE QUESTION
 # ============================================================
 
 QUESTION_BANK = {
-    "alibi": "Where were you between 11:45 PM and 12:10 AM?",
-
-    "observation": "Did you see or hear anything unusual?",
-
-    "timeline": "Walk me through what you were doing around 11:50 PM.",
-
-    "vent": "Did you know anything about the Storage ventilation panel?",
-
-    "vending": "Were you anywhere near the cafeteria vending machine?",
-
-    "camera": "What do you know about the three-minute camera outage?",
-
-    "inventory": "What do you know about the missing filter cartridges?",
-
-    "lab": "Did you enter or approach the Laboratory that night?"
+    "alibi": "Where were you at 11:50 PM?"
 }
 
 
@@ -307,351 +218,51 @@ QUESTION_BANK = {
 
 ANSWERS = {
 
-    # ========================================================
-    # RAVEN
-    # ========================================================
-
     "Raven": {
-
         "alibi": {
             "answer": (
-                "I was in the Laboratory. I started around 11:45 "
-                "and stayed there. I wasn't exactly socializing."
+                "In the Laboratory. I was working with the "
+                "centrifuge. It stopped a couple of minutes later."
             ),
             "truth": True
-        },
-
-        "observation": {
-            "answer": (
-                "I heard the vending cart outside around 11:50. "
-                "Then everything went strangely quiet for a few minutes."
-            ),
-            "truth": True
-        },
-
-        "timeline": {
-            "answer": (
-                "Around 11:50 I was running the centrifuge. "
-                "At 11:52 it suddenly stopped."
-            ),
-            "truth": True
-        },
-
-        "lab": {
-            "answer": (
-                "Obviously I was in the Laboratory. "
-                "That's where I work."
-            ),
-            "truth": True
-        },
-
-        "vent": {
-            "answer": (
-                "No. I don't touch the ventilation system. "
-                "That's not my department."
-            ),
-            "truth": True
-        },
-
-        "camera": {
-            "answer": (
-                "I noticed the lights flicker, but I didn't know "
-                "the cameras had gone down."
-            ),
-            "truth": True
-        },
-
-        "inventory": {
-            "answer": (
-                "I don't handle Storage inventory. "
-                "Ask Zephyr."
-            ),
-            "truth": True
-        },
-
-        "vending": {
-            "answer": (
-                "I did leave my desk for maybe thirty seconds "
-                "to grab coffee earlier. But that was before the alarm."
-            ),
-            "truth": False
         }
     },
-
-
-    # ========================================================
-    # ZEPHYR
-    # ========================================================
 
     "Zephyr": {
-
         "alibi": {
             "answer": (
-                "Storage. Inventory count. I was there all night. "
-                "Didn't leave once."
-            ),
-            "truth": False
-        },
-
-        "observation": {
-            "answer": (
-                "Nothing unusual. Storage was boring, as usual. "
-                "Boxes, shelves, inventory sheets."
-            ),
-            "truth": False
-        },
-
-        "timeline": {
-            "answer": (
-                "Around 11:50? I was checking the filter cartridges "
-                "in Storage. I remember because the vending machine "
-                "restocking was happening at the same time."
-            ),
-            "truth": False
-        },
-
-        "vent": {
-            "answer": (
-                "No. I don't have access to the ventilation override. "
-                "That's Maintenance."
-            ),
-            "truth": False
-        },
-
-        "vending": {
-            "answer": (
-                "I wasn't near the vending machine. "
-                "I was in Storage doing inventory."
-            ),
-            "truth": False
-        },
-
-        "camera": {
-            "answer": (
-                "I didn't even know the cameras went out."
-            ),
-            "truth": True
-        },
-
-        "inventory": {
-            "answer": (
-                "Six cartridges? That doesn't sound right. "
-                "I counted everything before midnight."
-            ),
-            "truth": False
-        },
-
-        "lab": {
-            "answer": (
-                "I never entered the Laboratory."
+                "In Storage. I was checking the filter inventory. "
+                "I didn't think anything was wrong."
             ),
             "truth": False
         }
     },
-
-
-    # ========================================================
-    # LUCA
-    # ========================================================
 
     "Luca": {
-
         "alibi": {
             "answer": (
-                "Corridor patrol. Mostly near the west entrance. "
-                "I checked the cameras every few minutes."
-            ),
-            "truth": True
-        },
-
-        "observation": {
-            "answer": (
-                "I saw someone pushing a small cart toward the "
-                "cafeteria around 11:50. Couldn't see the face."
-            ),
-            "truth": True
-        },
-
-        "timeline": {
-            "answer": (
-                "At 11:49 the corridor camera went dark. "
-                "I went to check the system."
-            ),
-            "truth": True
-        },
-
-        "camera": {
-            "answer": (
-                "The outage looked like a routine diagnostic at first. "
-                "Then I realized someone had manually overridden the system."
-            ),
-            "truth": True
-        },
-
-        "vent": {
-            "answer": (
-                "I didn't touch the ventilation controls."
-            ),
-            "truth": True
-        },
-
-        "vending": {
-            "answer": (
-                "I didn't use the vending machine. "
-                "I was on patrol."
-            ),
-            "truth": True
-        },
-
-        "inventory": {
-            "answer": (
-                "I know six cartridges disappeared. "
-                "Security was notified after the alarm."
-            ),
-            "truth": True
-        },
-
-        "lab": {
-            "answer": (
-                "I didn't enter the Laboratory."
+                "Near the west corridor. The cameras had just "
+                "gone down, so I was checking the security panel."
             ),
             "truth": True
         }
     },
-
-
-    # ========================================================
-    # MARINETTE
-    # ========================================================
 
     "Marinette": {
-
         "alibi": {
             "answer": (
-                "Medical Bay. I was there most of the night."
-            ),
-            "truth": True
-        },
-
-        "observation": {
-            "answer": (
-                "Someone came into the Medical Bay shortly before "
-                "midnight with a tiny cut on their hand."
-            ),
-            "truth": True
-        },
-
-        "timeline": {
-            "answer": (
-                "Around 11:50 I was preparing the emergency kit."
-            ),
-            "truth": True
-        },
-
-        "vent": {
-            "answer": (
-                "No idea. I don't have clearance for that system."
-            ),
-            "truth": True
-        },
-
-        "vending": {
-            "answer": (
-                "I heard the vending machine being restocked, "
-                "but I didn't go there."
-            ),
-            "truth": True
-        },
-
-        "camera": {
-            "answer": (
-                "I only noticed the hallway looked darker than usual."
-            ),
-            "truth": True
-        },
-
-        "inventory": {
-            "answer": (
-                "I heard that something was missing, "
-                "but I don't know how much."
-            ),
-            "truth": True
-        },
-
-        "lab": {
-            "answer": (
-                "I never went into the Laboratory."
+                "In the Medical Bay, preparing the emergency kit. "
+                "I heard the alarm a little later."
             ),
             "truth": True
         }
     },
 
-
-    # ========================================================
-    # ADRIEN
-    # ========================================================
-
     "Adrien": {
-
         "alibi": {
             "answer": (
-                "Generator Room. The power dipped around 11:49, "
-                "so I stayed there fixing it."
-            ),
-            "truth": True
-        },
-
-        "observation": {
-            "answer": (
-                "The power dipped for a few seconds. "
-                "Nothing major."
-            ),
-            "truth": True
-        },
-
-        "timeline": {
-            "answer": (
-                "11:49 power dip. I checked the generator. "
-                "By about 11:53 everything was stable."
-            ),
-            "truth": True
-        },
-
-        "vent": {
-            "answer": (
-                "I know the vent system exists, but I don't "
-                "have authorization to override it."
-            ),
-            "truth": True
-        },
-
-        "vending": {
-            "answer": (
-                "I grabbed a drink earlier, but not during "
-                "the restocking cycle."
-            ),
-            "truth": True
-        },
-
-        "camera": {
-            "answer": (
-                "The camera outage happened during the power dip, "
-                "but I don't think the generator caused it."
-            ),
-            "truth": True
-        },
-
-        "inventory": {
-            "answer": (
-                "Six filter cartridges went missing. "
-                "That's what I heard."
-            ),
-            "truth": True
-        },
-
-        "lab": {
-            "answer": (
-                "I passed the Laboratory earlier, but I didn't go inside."
+                "In the Generator Room. There was a brief power "
+                "fluctuation, so I stayed there to check the system."
             ),
             "truth": True
         }
@@ -660,44 +271,27 @@ ANSWERS = {
 
 
 # ============================================================
-# ROOM CLUES
+# LABORATORY CLUE
 # ============================================================
-
-# ------------------------------------------------------------
-# LABORATORY
-# ------------------------------------------------------------
-# IMPORTANT:
-# The first letters spell FOUR, but they are deliberately
-# NOT highlighted in the UI.
-#
-# Player has to notice the acrostic themselves.
-# ------------------------------------------------------------
 
 LAB_CLUE = {
     "title": "THE LABORATORY NOTE",
+
     "lines": [
         "Filter pressure was stable before midnight.",
         "One centrifuge cycle was interrupted manually.",
-        "Unused cartridges were stored elsewhere.",
-        "Raven's workstation was still active."
+        "Raven's workstation was still active.",
+        "The interruption was recorded at 11:52 PM."
     ]
 }
 
+
 # ============================================================
-# STORAGE
+# STORAGE CLUE
 # ============================================================
 
 STORAGE_CLUE = {
-    "title": "THE SCRATCHED INVENTORY BOARD",
-
-    "lines": [
-        {"text": "Boxes counted: 18", "struck": False},
-        {"text": "Filter cartridges: 24", "struck": True},
-        {"text": "Filter cartridges: 18", "struck": False},
-        {"text": "Ventilation override — 11:50 PM", "struck": False},
-        {"text": "Maintenance Chief — OFF SHIFT", "struck": False},
-        {"text": "Supply Coordinator — ON SHIFT", "struck": False},
-    ],
+    "title": "THE STORAGE RIDDLE",
 
     "riddle": [
         "I cannot be seen, but I shake every leaf.",
@@ -705,12 +299,16 @@ STORAGE_CLUE = {
         "I can carry a whisper farther than the person who spoke it.",
         "Sailors welcome me when I am gentle, but fear what I become when I grow wild.",
         "What am I?"
-    ]
+    ],
+
+    "note": (
+        "A ventilation override was recorded at 11:50 PM."
+    )
 }
 
 
 # ============================================================
-# CAFETERIA
+# CAFETERIA CLUE
 # ============================================================
 
 CAFETERIA_CLUE = {
@@ -733,8 +331,7 @@ CAFETERIA_CLUE = {
     ],
 
     "note": (
-        "Restocking began at 11:50 PM — exactly when the "
-        "corridor cameras went dark."
+        "Restocking began at 11:50 PM — during the camera blackout."
     )
 }
 
@@ -744,57 +341,20 @@ CAFETERIA_CLUE = {
 # ============================================================
 
 def get_lab_clue():
-    """
-    Return the Laboratory clue.
-    """
     return LAB_CLUE
 
 
 def get_storage_clue(decision=None):
-    """
-    Return the Storage clue.
-
-    The decision parameter is accepted because game.py passes
-    the Mole's room decision to this function.
-
-    The clue itself does not change based on that decision.
-    """
     return STORAGE_CLUE
 
 
 def get_cafeteria_clue(decision=None):
-    """
-    Return the Cafeteria clue.
-
-    The decision parameter is accepted because game.py passes
-    the Mole's room decision to this function.
-
-    The clue itself does not change based on that decision.
-    """
     return CAFETERIA_CLUE
 
 
 def get_question(character, question_key):
-    """
-    Return the stored answer information for a character.
-    """
     return ANSWERS[character][question_key]
 
-
-def get_profile(character):
-    """
-    Return the profile for a character.
-    """
-    return PROFILES[character]
-
-def get_answer(character, question_key, tell_truth=True):
-    """
-    Return the interrogation answer for a character.
-
-    The tell_truth parameter is accepted because game.py
-    uses it when handling the Mole's responses.
-    """
-    return ANSWERS[character][question_key]["answer"]
 
 def get_answer(character, question_key, tell_truth=True):
     return ANSWERS[character][question_key]["answer"]
