@@ -1,102 +1,448 @@
 """
 evidence.py - Tracks evidence, contradictions, and suspect guilt scores.
 """
+
 import case
 
 
 class EvidenceBoard:
+
     def __init__(self):
         self.contradictions = []
-        self.guilt_scores = {char: 0 for char in case.CHARACTERS}
-        self.suspect_statements = {}  # character -> {question_key -> {answer, lied}}
+
+        # Individual suspicion for each suspect
+        self.guilt_scores = {
+            char: 0 for char in case.CHARACTERS
+        }
+
+        # character -> question -> answer information
+        self.suspect_statements = {}
+
+        # Clues discovered from rooms
         self.clues_found = set()
+
+        # PIN status
         self.pin_cracked = False
 
-    def log_answer(self, character, question_key, answer, lied):
+    # =========================================================
+    # SUSPICION
+    # =========================================================
+
+    def add_suspicion(self, character, amount):
+        """Increase a suspect's suspicion score."""
+
+        if character not in self.guilt_scores:
+            return
+
+        self.guilt_scores[character] += amount
+
+        self.guilt_scores[character] = max(
+            0,
+            min(100, self.guilt_scores[character])
+        )
+
+    def reduce_suspicion(self, character, amount):
+        """Decrease a suspect's suspicion score."""
+
+        if character not in self.guilt_scores:
+            return
+
+        self.guilt_scores[character] -= amount
+
+        self.guilt_scores[character] = max(
+            0,
+            min(100, self.guilt_scores[character])
+        )
+
+    def get_guilt_score(self, character):
+        """Return suspicion score from 0 to 100."""
+
+        return min(
+            100,
+            max(
+                0,
+                self.guilt_scores.get(character, 0)
+            )
+        )
+
+    # =========================================================
+    # INTERROGATION
+    # =========================================================
+
+    def log_answer(
+        self,
+        character,
+        question_key,
+        answer,
+        lied
+    ):
+        """Store an interrogation answer."""
+
         if character not in self.suspect_statements:
             self.suspect_statements[character] = {}
-        self.suspect_statements[character][question_key] = {"answer": answer, "lied": lied}
 
-        # Immediate guilt bump for lying
+        self.suspect_statements[character][question_key] = {
+            "answer": answer,
+            "lied": lied
+        }
+
+        # -----------------------------------------------------
+        # LIE DETECTION
+        # -----------------------------------------------------
+
         if lied:
-            self.guilt_scores[character] += 15
+
+            # Base suspicion for lying
+            self.add_suspicion(
+                character,
+                15
+            )
+
+            # Lying about an alibi is especially suspicious
             if question_key == "alibi":
-                self.guilt_scores[character] += 25
+                self.add_suspicion(
+                    character,
+                    15
+                )
+
+        # -----------------------------------------------------
+        # ZEPHYR-SPECIFIC EVIDENCE
+        # -----------------------------------------------------
+
+        if character == "Zephyr":
+
+            # Zephyr denying vent access is extremely suspicious
+            # because the background says Supply Coordinator has
+            # vent authorization.
+            if (
+                question_key == "vent"
+                and lied
+            ):
+                self.add_suspicion(
+                    "Zephyr",
+                    25
+                )
+
+            # Zephyr denying vending activity conflicts with
+            # the cafeteria evidence.
+            elif (
+                question_key == "vending"
+                and lied
+            ):
+                self.add_suspicion(
+                    "Zephyr",
+                    20
+                )
+
+            # A false timeline/alibi is suspicious.
+            elif (
+                question_key == "timeline"
+                and lied
+            ):
+                self.add_suspicion(
+                    "Zephyr",
+                    15
+                )
+
+    # =========================================================
+    # CONTRADICTIONS
+    # =========================================================
 
     def detect_contradictions(self):
-        """Scan all statements for timeline/access conflicts."""
+        """
+        Compare statements made by suspects and identify
+        contradictions.
+        """
+
         new_contradictions = []
 
-        # Check 1: Zephyr claims to be in Lab, but Raven claims she was alone
-        zephyr_in_lab = (
-            "alibi" in self.suspect_statements.get("Zephyr", {})
-            and "Laboratory" in self.suspect_statements["Zephyr"]["alibi"].get("answer", "")
-        )
-        raven_alone = (
-            "alibi" in self.suspect_statements.get("Raven", {})
-            and "alone" in self.suspect_statements["Raven"]["alibi"].get("answer", "").lower()
-        )
-        if zephyr_in_lab and raven_alone:
-            contradiction = {
-                "type": "timeline_conflict",
-                "characters": ["Raven", "Zephyr"],
-                "detail": "Raven claims she was ALONE in the Laboratory, but Zephyr claims to have been there.",
-            }
-            if contradiction not in self.contradictions and contradiction not in new_contradictions:
-                new_contradictions.append(contradiction)
-                self.guilt_scores["Zephyr"] += 30
+        # =====================================================
+        # CHECK 1:
+        # ZEPHYR VS RAVEN
+        # =====================================================
 
-        # Check 2: Luca saw Zephyr at the vending machine late
-        luca_saw_zephyr = (
-            "vending" in self.suspect_statements.get("Luca", {})
-            and ("Zephyr" in self.suspect_statements["Luca"]["vending"].get("answer", "")
-                 or "Supply Coordinator" in self.suspect_statements["Luca"]["vending"].get("answer", ""))
+        zephyr_alibi = (
+            self.suspect_statements
+            .get("Zephyr", {})
+            .get("alibi")
         )
-        if luca_saw_zephyr:
-            self.guilt_scores["Zephyr"] += 10
 
-        # Check 3: Zephyr denied being near vending but admits restocking when questioned
-        zephyr_denied = (
-            "vending" in self.suspect_statements.get("Zephyr", {})
-            and "no idea" in self.suspect_statements["Zephyr"]["vending"].get("answer", "").lower()
+        raven_alibi = (
+            self.suspect_statements
+            .get("Raven", {})
+            .get("alibi")
         )
-        zephyr_admitted = (
-            "vending" in self.suspect_statements.get("Zephyr", {})
-            and "restocked" in self.suspect_statements["Zephyr"]["vending"].get("answer", "").lower()
-        )
-        # (This is caught in game.py's lying detection, but worth flagging here too)
 
-        # Check 4: Zephyr has vent access
-        zephyr_has_access = (
-            "access" in self.suspect_statements.get("Zephyr", {})
-            and ("yes" in self.suspect_statements["Zephyr"]["access"].get("answer", "").lower()
-                 or "full vent access" in self.suspect_statements["Zephyr"]["access"].get("answer", "").lower())
+        if zephyr_alibi and raven_alibi:
+
+            zephyr_answer = (
+                zephyr_alibi["answer"]
+                .lower()
+            )
+
+            raven_answer = (
+                raven_alibi["answer"]
+                .lower()
+            )
+
+            # The false Zephyr alibi contains "lab"
+            # and Raven says she was alone.
+            zephyr_in_lab = (
+                "lab" in zephyr_answer
+                or "laboratory" in zephyr_answer
+            )
+
+            raven_alone = (
+                "alone" in raven_answer
+            )
+
+            if zephyr_in_lab and raven_alone:
+
+                contradiction = {
+                    "type": "timeline_conflict",
+                    "characters": [
+                        "Raven",
+                        "Zephyr"
+                    ],
+                    "detail": (
+                        "Raven claims she was ALONE in the "
+                        "Laboratory, but Zephyr claims he "
+                        "was there. Their stories cannot "
+                        "both be true."
+                    )
+                }
+
+                self._add_contradiction(
+                    contradiction,
+                    new_contradictions,
+                    suspicion=30
+                )
+
+        # =====================================================
+        # CHECK 2:
+        # ZEPHYR VS VENT AUTHORIZATION
+        # =====================================================
+
+        zephyr_vent = (
+            self.suspect_statements
+            .get("Zephyr", {})
+            .get("vent")
         )
-        if zephyr_has_access:
-            self.guilt_scores["Zephyr"] += 20
+
+        if zephyr_vent:
+
+            answer = (
+                zephyr_vent["answer"]
+                .lower()
+            )
+
+            denied_access = (
+                "no" in answer
+                and (
+                    "vent" in answer
+                    or "access" in answer
+                )
+            )
+
+            if denied_access:
+
+                contradiction = {
+                    "type": "access_conflict",
+                    "characters": [
+                        "Zephyr"
+                    ],
+                    "detail": (
+                        "Zephyr denied having vent access, "
+                        "but the Vent Access Authorization "
+                        "identifies the Supply Coordinator "
+                        "as an authorized vent user."
+                    )
+                }
+
+                self._add_contradiction(
+                    contradiction,
+                    new_contradictions,
+                    suspicion=20
+                )
+
+        # =====================================================
+        # CHECK 3:
+        # ZEPHYR VS CAFETERIA
+        # =====================================================
+
+        zephyr_vending = (
+            self.suspect_statements
+            .get("Zephyr", {})
+            .get("vending")
+        )
+
+        if zephyr_vending:
+
+            answer = (
+                zephyr_vending["answer"]
+                .lower()
+            )
+
+            denied_vending = (
+                "wasn't near" in answer
+                or "was not near" in answer
+                or "not near" in answer
+            )
+
+            if (
+                denied_vending
+                and "cafeteria_pin" in self.clues_found
+            ):
+
+                contradiction = {
+                    "type": "vending_conflict",
+                    "characters": [
+                        "Zephyr"
+                    ],
+                    "detail": (
+                        "Zephyr denied being near the "
+                        "vending machine, but the cafeteria "
+                        "restocking evidence identifies the "
+                        "Supply Coordinator's involvement."
+                    )
+                }
+
+                self._add_contradiction(
+                    contradiction,
+                    new_contradictions,
+                    suspicion=20
+                )
 
         return new_contradictions
 
+    # =========================================================
+    # CONTRADICTION HELPER
+    # =========================================================
+
+    def _add_contradiction(
+        self,
+        contradiction,
+        new_contradictions,
+        suspicion=0
+    ):
+        """
+        Add a contradiction only once.
+        """
+
+        existing = any(
+            item["type"] == contradiction["type"]
+            and item["characters"]
+            == contradiction["characters"]
+            for item in self.contradictions
+        )
+
+        if existing:
+            return
+
+        # IMPORTANT:
+        # Actually save the contradiction.
+        self.contradictions.append(
+            contradiction
+        )
+
+        new_contradictions.append(
+            contradiction
+        )
+
+        if suspicion > 0:
+
+            for character in contradiction["characters"]:
+
+                self.add_suspicion(
+                    character,
+                    suspicion
+                )
+
+    # =========================================================
+    # ROOM CLUES
+    # =========================================================
+
     def add_clue(self, clue_name):
-        self.clues_found.add(clue_name)
+
+        if clue_name in self.clues_found:
+            return
+
+        self.clues_found.add(
+            clue_name
+        )
+
+        # -----------------------------------------------------
+        # LABORATORY
+        # -----------------------------------------------------
+
         if clue_name == "lab_acrostic":
-            self.guilt_scores["Zephyr"] += 5
+
+            # The clue spells FOUR.
+            # This is primarily useful for the PIN puzzle.
+            # It does not directly accuse anyone.
+            pass
+
+        # -----------------------------------------------------
+        # STORAGE
+        # -----------------------------------------------------
+
         elif clue_name == "storage_riddle":
-            self.guilt_scores["Zephyr"] += 5
+
+            # Riddle answer = BREEZE.
+            # BREEZE has 6 letters.
+            # This contributes to solving the PIN.
+            pass
+
+        # -----------------------------------------------------
+        # CAFETERIA
+        # -----------------------------------------------------
+
         elif clue_name == "cafeteria_pin":
-            self.guilt_scores["Zephyr"] += 5
+
+            # The restocking record is associated with
+            # the Supply Coordinator.
+            self.add_suspicion(
+                "Zephyr",
+                10
+            )
+
+    # =========================================================
+    # PIN
+    # =========================================================
 
     def set_pin_cracked(self):
-        self.pin_cracked = True
-        self.guilt_scores["Zephyr"] += 15
 
-    def get_guilt_score(self, character):
-        return min(100, self.guilt_scores.get(character, 0))
+        if self.pin_cracked:
+            return
+
+        self.pin_cracked = True
+
+        # Cracking the PIN confirms the employee credentials
+        # associated with the Supply Coordinator.
+        self.add_suspicion(
+            "Zephyr",
+            20
+        )
+
+    # =========================================================
+    # SUMMARY
+    # =========================================================
 
     def get_summary(self):
+
         return {
-            "contradictions": self.contradictions,
-            "guilt_scores": self.guilt_scores,
-            "clues_found": self.clues_found,
-            "pin_cracked": self.pin_cracked,
+            "contradictions":
+                self.contradictions,
+
+            "guilt_scores":
+                self.guilt_scores,
+
+            "clues_found":
+                self.clues_found,
+
+            "pin_cracked":
+                self.pin_cracked,
+
+            "suspect_statements":
+                self.suspect_statements,
         }
