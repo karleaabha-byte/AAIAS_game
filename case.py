@@ -367,6 +367,9 @@ def get_lab_clue():
 
 
 def get_storage_clue(decision=None):
+    if decision == "sabotage":
+        return STORAGE_SABOTAGED_RIDDLE
+
     return STORAGE_CLUE
 
 
