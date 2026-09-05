@@ -1,5 +1,4 @@
-```python
-"""
+
 app.py - Streamlit front-end for "Who Is the Mole?" — NOIR EDITION
 
 Run:
@@ -1942,4 +1941,4 @@ if (
         "The facility is running out of time. "
         "Make your final accusation."
     )
-```
+
