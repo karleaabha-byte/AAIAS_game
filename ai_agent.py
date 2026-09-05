@@ -2,11 +2,7 @@
 ai_agent.py
 Adversarial Mole AI for Zom-Mole Hunter.
 
-Every major Zephyr decision is exactly 50/50.
-
-IMPORTANT:
-The AI decision is only made when GameState explicitly asks for it.
-Streamlit reruns do NOT cause another decision.
+Every Zephyr action is decided independently with exactly 50/50 odds.
 """
 
 import random
@@ -29,6 +25,140 @@ class MoleAI:
         self.decisions_log = []
 
     # ========================================================
+    # GENERIC HELP / SABOTAGE DECISION
+    # ========================================================
+
+    def decide_help_or_sabotage(
+        self,
+        action_name,
+        suspicion=None,
+        actions_remaining=None
+    ):
+        """
+        EXACTLY 50/50.
+
+        Returns:
+            "help"
+            "sabotage"
+        """
+
+        decision = (
+            "sabotage"
+            if self.rng.random() < 0.5
+            else "help"
+        )
+
+        if decision == "sabotage":
+            self.sabotage_count += 1
+        else:
+            self.help_count += 1
+
+        self.decisions_log.append(
+            f"Zephyr chose to {decision.upper()} "
+            f"during {action_name}."
+        )
+
+        return decision
+
+    # ========================================================
+    # ROOM ACTION
+    # ========================================================
+
+    def decide_room_action(
+        self,
+        suspicion=None,
+        actions_remaining=None
+    ):
+        return self.decide_help_or_sabotage(
+            "room investigation",
+            suspicion,
+            actions_remaining
+        )
+
+    # ========================================================
+    # STORAGE RIDDLE
+    # ========================================================
+
+    def decide_riddle_sabotage(
+        self,
+        suspicion=None,
+        actions_remaining=None
+    ):
+        """
+        Compatibility method for game.py.
+
+        Returns:
+            True  -> hard/sabotaged riddle
+            False -> normal riddle
+        """
+
+        decision = self.decide_help_or_sabotage(
+            "Storage riddle",
+            suspicion,
+            actions_remaining
+        )
+
+        return decision == "sabotage"
+
+    # ========================================================
+    # CAFETERIA
+    # ========================================================
+
+    def decide_cafeteria_action(
+        self,
+        suspicion=None,
+        actions_remaining=None
+    ):
+        return self.decide_help_or_sabotage(
+            "Cafeteria clue",
+            suspicion,
+            actions_remaining
+        )
+
+    # ========================================================
+    # SECURITY / WORDLE
+    # ========================================================
+
+    def decide_security_sabotage(
+        self,
+        suspicion=None,
+        actions_remaining=None
+    ):
+        """
+        EXACTLY 50/50.
+
+        True  -> sabotage -> Wordle challenge
+        False -> help -> no challenge
+        """
+
+        decision = self.decide_help_or_sabotage(
+            "interrogation access",
+            suspicion,
+            actions_remaining
+        )
+
+        if decision == "sabotage":
+            self.security_sabotage_count += 1
+            return True
+
+        self.security_skip_count += 1
+        return False
+
+    # ========================================================
+    # COMPATIBILITY WITH EXISTING GAME.PY
+    # ========================================================
+
+    def decide_extra_challenge(
+        self,
+        suspicion=None,
+        actions_remaining=None
+    ):
+        return self.decide_security_sabotage(
+            suspicion,
+            actions_remaining
+        )
+
+    # ========================================================
     # TRUTH / LIE
     # ========================================================
 
@@ -36,9 +166,8 @@ class MoleAI:
         """
         EXACTLY 50/50.
 
-        Returns:
-            True  -> tell truth
-            False -> lie
+        True  -> tell truth
+        False -> lie
         """
 
         tell_truth = self.rng.random() < 0.5
@@ -56,94 +185,20 @@ class MoleAI:
         return tell_truth
 
     # ========================================================
-    # ROOM SABOTAGE
-    # ========================================================
-
-    def decide_room_action(
-        self,
-        suspicion=None,
-        actions_remaining=None
-    ):
-        """
-        EXACTLY 50/50.
-
-        Returns:
-            'sabotage'
-            'help'
-        """
-
-        will_sabotage = self.rng.random() < 0.5
-
-        if will_sabotage:
-            self.sabotage_count += 1
-            decision = "sabotage"
-        else:
-            self.help_count += 1
-            decision = "help"
-
-        self.decisions_log.append(
-            f"Zephyr chose to {decision.upper()} the room clue."
-        )
-
-        return decision
-
-    # ========================================================
-    # SECURITY CHALLENGE
-    # ========================================================
-
-    def decide_security_sabotage(
-        self,
-        suspicion=None,
-        actions_remaining=None
-    ):
-        """
-        EXACTLY 50/50.
-
-        Returns:
-            True  -> deploy timed security challenge
-            False -> keep interrogation system normally accessible
-        """
-
-        deploy = self.rng.random() < 0.5
-
-        if deploy:
-            self.security_sabotage_count += 1
-        else:
-            self.security_skip_count += 1
-
-        self.decisions_log.append(
-            f"Zephyr chose to "
-            f"{'DEPLOY' if deploy else 'SKIP'} "
-            f"the security challenge."
-        )
-
-        return deploy
-
-    # ========================================================
     # DEBUG / STATS
     # ========================================================
 
     def stats(self):
 
         return {
-            "sabotage_count":
-                self.sabotage_count,
-
-            "help_count":
-                self.help_count,
-
-            "lie_count":
-                self.lie_count,
-
-            "truth_count":
-                self.truth_count,
-
+            "sabotage_count": self.sabotage_count,
+            "help_count": self.help_count,
+            "lie_count": self.lie_count,
+            "truth_count": self.truth_count,
             "security_sabotage_count":
                 self.security_sabotage_count,
-
             "security_skip_count":
                 self.security_skip_count,
-
             "decisions_log":
                 list(self.decisions_log)
         }
