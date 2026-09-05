@@ -1,31 +1,45 @@
 """
-game.py - Game state and rules engine for "Who Is the Mole?"
+game.py
+Game state and rules engine for "Zom-Mole Hunter"
 """
+
 import case
 from ai_agent import MoleAI
 from evidence import EvidenceBoard
+
 
 ROOMS = ["Laboratory", "Storage", "Cafeteria"]
 TOTAL_BUDGET = 12
 
 
 class GameState:
+
     def __init__(self, seed=None):
+
         self.mole_ai = MoleAI(seed)
         self.evidence = EvidenceBoard()
+
         self.actions_used = 0
         self.suspicion = 10
+
         self.visited_rooms = {}
         self.room_decisions = {}
+
         self.asked = {}
         self.log = []
+
         self.game_over = False
         self.result = None
         self.accused = None
+
         self.contradiction_flagged = False
         self.pin_cracked = False
         self.pin_attempts = 0
         self.last_contradiction = None
+
+    # ========================================================
+    # ACTIONS
+    # ========================================================
 
     @property
     def actions_remaining(self):
@@ -38,128 +52,325 @@ class GameState:
         self.log.append(text)
 
     def can_act(self):
-        return not self.game_over and self.actions_remaining > 0
+        return (
+            not self.game_over
+            and self.actions_remaining > 0
+        )
+
+    # ========================================================
+    # ROOM INVESTIGATION
+    # ========================================================
 
     def visit_room(self, room):
+
         if not self.can_act():
             return False, "No actions remaining."
+
         if room in self.visited_rooms:
             return False, f"You've already investigated the {room}."
+
         if room not in ROOMS:
             return False, "Unknown room."
 
         if room == "Laboratory":
+
             clue = case.get_lab_clue()
             decision = "neutral"
+
             self.evidence.add_clue("lab_acrostic")
+
         else:
-            decision = self.mole_ai.decide_room_action(self.suspicion, self.actions_remaining)
+
+            decision = self.mole_ai.decide_room_action(
+                self.suspicion,
+                self.actions_remaining
+            )
+
             if room == "Storage":
+
                 clue = case.get_storage_clue(decision)
                 self.evidence.add_clue("storage_riddle")
+
             else:
+
                 clue = case.get_cafeteria_clue(decision)
                 self.evidence.add_clue("cafeteria_pin")
 
             if decision == "sabotage":
+
                 self.suspicion += self.mole_ai.rng.randint(8, 14)
-                self._log(f"🕵️ Something feels *off* about the {room} — did someone tamper with it?")
+
+                self._log(
+                    f"🕵️ Something feels off about the {room}."
+                )
+
             else:
+
                 self.suspicion -= self.mole_ai.rng.randint(4, 8)
-                self._log(f"🙂 The {room} seems undisturbed, almost helpfully so.")
+
+                self._log(
+                    f"🙂 The {room} seems undisturbed."
+                )
 
         self._clamp_suspicion()
+
         self.room_decisions[room] = decision
         self.visited_rooms[room] = clue
+
         self.actions_used += 1
-        self._log(f"🔎 Investigated the {room}.")
+
+        self._log(
+            f"🔎 Investigated the {room}."
+        )
+
         return True, clue
 
-    def ask_question(self, character, question_key):
+    # ========================================================
+    # PIN CRACKING
+    # ========================================================
+
+    def attempt_pin(self, guess):
+
         if not self.can_act():
             return False, "No actions remaining."
+
+        # EVERY ATTEMPT COSTS ONE ACTION
+        self.actions_used += 1
+        self.pin_attempts += 1
+
+        digits = "".join(
+            ch for ch in str(guess)
+            if ch.isdigit()
+        )
+
+        correct = digits == case.CORRECT_PIN
+
+        if correct and not self.pin_cracked:
+
+            self.pin_cracked = True
+
+            self.evidence.set_pin_cracked()
+
+            self._log(
+                "🔓 PIN CRACKED."
+            )
+
+            self._log(
+                "The restocking log opens a restricted "
+                "employee record."
+            )
+
+            self._log(
+                "The credentials belong to the Supply Coordinator."
+            )
+
+            return True, {
+                "status": "cracked",
+                "message": (
+                    "The PIN works. A restricted employee record "
+                    "has been unlocked."
+                )
+            }
+
+        if correct and self.pin_cracked:
+
+            return True, {
+                "status": "already_cracked",
+                "message": "The PIN has already been cracked."
+            }
+
+        self._log(
+            f"🔐 Incorrect PIN attempt: {digits or 'empty'}."
+        )
+
+        return False, {
+            "status": "incorrect",
+            "message": "Incorrect PIN."
+        }
+
+    # ========================================================
+    # INTERROGATION
+    # ========================================================
+
+    def ask_question(self, character, question_key):
+
+        if not self.pin_cracked:
+
+            return (
+                False,
+                "The interrogation system is locked. "
+                "Crack the Cafeteria PIN first."
+            )
+
+        if not self.can_act():
+
+            return False, "No actions remaining."
+
         if character in self.asked:
-            return False, f"You've already questioned {character}."
+
+            return (
+                False,
+                f"You've already questioned {character}."
+            )
+
         if character not in case.CHARACTERS:
+
             return False, "Unknown character."
 
         if character == case.MOLE:
-            tell_truth = self.mole_ai.decide_truth_or_lie(self.suspicion)
-            answer = case.get_answer(character, question_key, tell_truth)
+
+            tell_truth = self.mole_ai.decide_truth_or_lie(
+                self.suspicion
+            )
+
+            answer = case.get_answer(
+                character,
+                question_key,
+                tell_truth
+            )
+
             lied = not tell_truth
 
             if lied and question_key == "alibi":
-                if "Raven" in self.asked and self.asked["Raven"]["question"] == "alibi":
+
+                if (
+                    "Raven" in self.asked
+                    and
+                    self.asked["Raven"]["question"] == "alibi"
+                ):
+
                     self.suspicion += 25
+
                     self.contradiction_flagged = True
-                    self.last_contradiction = "Raven claimed to be alone in the Laboratory, but Zephyr claims to have visited."
-                    self._log(
-                        "🚨 CONTRADICTION: Raven swore she was ALONE in the Laboratory all night, but "
-                        "Zephyr just claimed to have popped in. That doesn't add up!"
+
+                    self.last_contradiction = (
+                        "Raven claimed to be alone in the "
+                        "Laboratory, but Zephyr's statement "
+                        "does not match that timeline."
                     )
+
+                    self._log(
+                        "🚨 CONTRADICTION detected between "
+                        "the alibis."
+                    )
+
                 else:
+
                     self.suspicion += 6
+
             elif lied:
+
                 self.suspicion += 5
+
             else:
+
                 self.suspicion -= 3
+
         else:
+
             tell_truth = True
-            answer = case.get_answer(character, question_key, True)
+
+            answer = case.get_answer(
+                character,
+                question_key,
+                True
+            )
+
             lied = False
 
         self._clamp_suspicion()
-        self.asked[character] = {"question": question_key, "answer": answer, "lied": lied}
-        self.evidence.log_answer(character, question_key, answer, lied)
-        self.actions_used += 1
-        self._log(f"💬 Questioned {character}.")
 
-        # Detect contradictions after logging
-        new_contradictions = self.evidence.detect_contradictions()
+        self.asked[character] = {
+            "question": question_key,
+            "answer": answer,
+            "lied": lied
+        }
+
+        self.evidence.log_answer(
+            character,
+            question_key,
+            answer,
+            lied
+        )
+
+        self.actions_used += 1
+
+        self._log(
+            f"💬 Questioned {character}."
+        )
+
+        new_contradictions = (
+            self.evidence.detect_contradictions()
+        )
+
         for contradiction in new_contradictions:
-            self._log(f"🚨 {contradiction['detail']}")
+
+            self._log(
+                f"🚨 {contradiction['detail']}"
+            )
 
         return True, answer
 
-    def attempt_pin(self, guess):
-        self.pin_attempts += 1
-        digits = "".join(ch for ch in guess if ch.isdigit())
-        correct = digits == case.CORRECT_PIN
-        if correct and not self.pin_cracked:
-            self.pin_cracked = True
-            self.evidence.set_pin_cracked()
-            self._log(
-                "🔓 PIN cracked! The restocking log's employee ID checks out — "
-                "that's the Supply Coordinator's credentials."
-            )
-        return correct
+    # ========================================================
+    # ACCUSATION
+    # ========================================================
 
     def make_accusation(self, character):
+
         if self.game_over:
-            return False, "The case is already closed."
+
+            return (
+                False,
+                "The case is already closed."
+            )
+
         if character not in case.CHARACTERS:
+
             return False, "Unknown character."
 
         self.accused = character
+
         self.actions_used = TOTAL_BUDGET
+
         self.game_over = True
-        self.result = "win" if character == case.MOLE else "lose"
-        self._log(f"⚖️ Final accusation: {character}.")
+
+        self.result = (
+            "win"
+            if character == case.MOLE
+            else "lose"
+        )
+
+        self._log(
+            f"⚖️ Final accusation: {character}."
+        )
+
         return True, self.result
 
+    # ========================================================
+    # STATS
+    # ========================================================
+
     def get_stats(self):
+
         stats = self.mole_ai.stats()
+
         stats.update(
             {
                 "actions_used": self.actions_used,
                 "suspicion": self.suspicion,
                 "result": self.result,
                 "accused": self.accused,
-                "contradiction_flagged": self.contradiction_flagged,
-                "pin_cracked": self.pin_cracked,
-                "pin_attempts": self.pin_attempts,
-                "guilt_scores": self.evidence.guilt_scores,
-                "last_contradiction": self.last_contradiction,
+                "contradiction_flagged":
+                    self.contradiction_flagged,
+                "guilt_scores":
+                    self.evidence.guilt_scores,
+                "last_contradiction":
+                    self.last_contradiction,
+                "pin_cracked":
+                    self.pin_cracked,
+                "pin_attempts":
+                    self.pin_attempts,
             }
         )
+
         return stats
